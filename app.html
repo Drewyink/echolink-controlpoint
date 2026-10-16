@@ -288,6 +288,22 @@ const S = { view: "overview", source: "", tables: null, projects: [], projId: nu
 S.view = "welcome";
 try { if (localStorage.getItem("cp.skipWelcome") === "1") { S.view = localStorage.getItem("cp.view") || "overview"; if (S.view === "welcome") S.view = "overview"; } } catch (e) {}
 
+/* AI: runs when the hosting environment provides an AI capability, or on your own site when CONTROLPOINT_CONFIG.aiEndpoint points at a server that calls an LLM.
+   The endpoint receives POST {messages:[{role,content}]} and returns {text}. */
+const AI_ENDPOINT = (window.CONTROLPOINT_CONFIG && window.CONTROLPOINT_CONFIG.aiEndpoint) || "";
+const aiOn = () => !!(S.caps.sample || AI_ENDPOINT);
+async function aiCall(input, opts) {
+  opts = opts || {};
+  if (S.caps.sample) return S.caps.sample(input, opts);
+  const messages = typeof input === "string" ? [{ role: "user", content: input }] : input;
+  let r;
+  try { r = await fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages }), signal: opts.signal }); }
+  catch (e) { throw { code: e && e.name === "AbortError" ? "cancelled" : "network" }; }
+  if (!r.ok) throw { code: r.status === 429 ? "rate_limited" : "server_error" };
+  const j = await r.json(), text = j.text || "";
+  if (opts.onText) opts.onText({ text });
+  return { text };
+}
 const VIEWS = [
   ["welcome", "Welcome"], ["overview", "Command center"], ["schedule", "Schedule"], ["health", "Health check"],
   ["cost", "Cost & EVM"], ["risk", "Risk & what if"], ["assistant", "AI analyst"], ["data", "Data & exports"]
@@ -364,7 +380,7 @@ function alerts() {
 function render() {
   try { localStorage.setItem("cp.view", S.view); } catch (e) {}
   const fails = S.d ? S.d.checks.filter(c => !c.pass).length : 0;
-  $("#nav").innerHTML = VIEWS.map(([k, l]) => `<button data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "health" && S.d ? `<span class="cnt ${fails ? "bad" : ""}">${14 - fails}/14</span>` : ""}</button>`).join("");
+  $("#nav").innerHTML = VIEWS.map(([k, l]) => [k, k === "assistant" && !aiOn() ? "Status narrative" : l]).map(([k, l]) => `<button data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "health" && S.d ? `<span class="cnt ${fails ? "bad" : ""}">${14 - fails}/14</span>` : ""}</button>`).join("");
   const R = $("#root");
   R.innerHTML = (S.view === "welcome" ? "" : topbar()) + ({ welcome: vWelcome, overview: vOverview, schedule: vSchedule, health: vHealth, cost: vCost, risk: vRisk, assistant: vAssistant, data: vData }[S.view] || vOverview)();
   R.classList.remove("fade"); void R.offsetWidth; R.classList.add("fade");
@@ -416,7 +432,7 @@ function vOverview() {
     </section>
   </div>
   ${S.ev.BAC ? `<section class="panel"><div class="panel-h"><h2>Cumulative cost curve</h2>${curveLegend()}</div><div class="chart" id="scurve"></div></section>` : ""}
-  <section class="panel"><div class="panel-h"><h2>AI briefing</h2><div class="actions"><button class="btn primary" data-act="narrative">${ICON.spark}Draft status narrative</button></div></div>
+  <section class="panel"><div class="panel-h"><h2>${aiOn() ? "AI briefing" : "Status briefing"}</h2><div class="actions"><button class="btn primary" data-act="narrative">${ICON.spark}Draft status narrative</button></div></div>
     <div id="brief-host">${S.narrative ? `<div class="doc">${md(S.narrative)}</div>` : `<p class="muted" style="margin:0">Generate a monthly status narrative covering schedule, critical path, cost, health and risk, written from the numbers above.</p>`}</div>
   </section>`;
 }
@@ -444,14 +460,15 @@ function vWelcome() {
     ["health", "DCMA 14 point health check", "Scores schedule quality against the standard used in federal reviews, names every offending activity, and explains how to fix it in P6.", "health", "Run health check"],
     ["evm", "Earned value and forecasting", "Calculates SPI, CPI, TCPI, earned schedule and three estimates at completion, with an S curve by WBS.", "cost", "See cost performance"],
     ["risk", "Monte Carlo risk", "Simulates thousands of possible futures with your risk register to give P50 and P80 dates and the odds of meeting the target.", "risk", "Simulate risk"],
-    ["ai", "AI controls analyst", "Ask questions in plain language and get answers grounded in your schedule, plus a monthly status narrative drafted in one click.", "assistant", "Ask the analyst"],
+    aiOn() ? ["ai", "AI controls analyst", "Ask questions in plain language and get answers grounded in your schedule, plus a monthly status narrative drafted in one click.", "assistant", "Ask the analyst"]
+      : ["ai", "Automated status narrative", "Drafts a monthly status report covering schedule, critical path, cost, schedule quality and risk, ready to copy into your owner report.", "assistant", "Draft a narrative"],
     ["out", "Reports and exports", "Export the activity register, DCMA report and earned value report, ready for an owner submission or a PMO review.", "data", "View exports"],
   ];
   return `<section class="hero">
     <div>
       <div class="eyebrow">Echolink ControlPoint</div>
       <h1>Project controls intelligence for <em>Primavera P6</em> schedules</h1>
-      <p class="lede">ControlPoint turns a P6 export into a clear picture of where your project really stands. It recalculates the critical path, checks schedule quality, measures cost and schedule performance, predicts the finish date under risk, and explains all of it in plain language.</p>
+      <p class="lede">ControlPoint turns a P6 export into a clear picture of where your project really stands. It recalculates the critical path, checks schedule quality, measures cost and schedule performance, predicts the finish date under risk, and explains the results in plain language.</p>
       <div class="actions"><button class="btn primary" data-go="overview">Explore the sample project</button><button class="btn" data-act="upload">${ICON.upload}Load your P6 schedule</button></div>
       <div class="fine">${ICON.ok}Your file is analyzed in your browser and is never uploaded.</div>
     </div>
@@ -572,7 +589,7 @@ function vHealth() {
   return `<section class="panel score">
     <svg class="ring" viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="${r}" fill="none" stroke="var(--sunk)" stroke-width="9"/><circle cx="46" cy="46" r="${r}" fill="none" stroke="${col}" stroke-width="9" stroke-dasharray="${C * frac} ${C}" stroke-linecap="round" transform="rotate(-90 46 46)"/><text x="46" y="52" text-anchor="middle" font-family="Barlow Semi Condensed, sans-serif" font-size="22" font-weight="700" style="fill:var(--ink)">${d.passed}/14</text></svg>
     <div style="flex:1;min-width:240px"><h2>DCMA 14 point assessment</h2><p class="muted" style="margin:4px 0 0">${d.inc} incomplete activities assessed at the data date. ${14 - d.passed} checks fail. Thresholds follow the Defense Contract Management Agency guideline used for federal schedule reviews.</p></div>
-    <div class="actions"><button class="btn primary" data-act="ai-health">${ICON.spark}Build a fix plan</button><button class="btn" data-act="dl-dcma">${ICON.dl}Report CSV</button></div>
+    <div class="actions">${aiOn() ? `<button class="btn primary" data-act="ai-health">${ICON.spark}Build a fix plan</button>` : ""}<button class="btn" data-act="dl-dcma">${ICON.dl}Report CSV</button></div>
   </section>
   <section class="checks">${d.checks.map(c => {
     const items = [...new Set(c.items)];
@@ -583,7 +600,7 @@ function vHealth() {
       <p>${esc(c.desc)}.</p>
       ${!c.pass ? `<p><b>Why it matters.</b> ${esc(c.why)}</p><p><b>Fix.</b> ${esc(c.fix)}</p>${c.note ? `<p class="tone-bad">${esc(c.note)}.</p>` : ""}` : ""}
       ${items.length ? `<details ${!c.pass && items.length <= 12 ? "open" : ""}><summary>${items.length} ${items.length === 1 ? "activity" : "activities"}</summary><div class="codes">${items.map(i => `<button data-act-open="${i}" title="${esc(S.m.acts[i].name)}">${esc(S.m.acts[i].code)}</button>`).join("")}</div></details>` : ""}
-      ${!c.pass ? `<div><button class="btn sm ghost" data-ai-check="${c.id}">${ICON.spark}Explain with AI</button></div>` : ""}
+      ${!c.pass && aiOn() ? `<div><button class="btn sm ghost" data-ai-check="${c.id}">${ICON.spark}Explain with AI</button></div>` : ""}
     </article>`; }).join("")}</section>`;
 }
 
@@ -693,20 +710,25 @@ const SUGGEST = [
   "Write a time impact summary for the permit delay.",
 ];
 function vAssistant() {
-  const on = !!S.caps.sample;
+  const on = aiOn();
+  if (!on) return `<section class="panel">
+    <div class="panel-h"><div><h2>Status narrative</h2><p class="muted" style="margin:2px 0 0;font-size:.88rem">A written monthly status report built from this schedule's computed results: forecast dates, critical path, earned value, DCMA findings and the risk simulation.</p></div>
+      <div class="actions"><button class="btn primary" data-act="narrative">${ICON.spark}Draft status narrative</button></div></div>
+    ${S.narrative ? "" : `<p class="muted" style="margin:0">Click Draft status narrative to generate the report. You can copy it or save it as a Markdown file.</p>`}
+  </section>
+  ${S.narrative ? `<section class="panel"><div class="panel-h"><h2>Status narrative</h2><div class="actions"><button class="btn sm" data-act="copy-narr">Copy</button><button class="btn sm" data-act="dl-narr">${ICON.dl}Markdown</button></div></div><div class="doc" id="narr-doc">${md(S.narrative)}</div></section>` : ""}`;
   return `<section class="panel">
     <div class="panel-h"><div><h2>AI project controls analyst</h2><p class="muted" style="margin:2px 0 0;font-size:.88rem">Answers come from this schedule's computed results: CPM dates, float, DCMA findings, earned value and the risk simulation.</p></div>
       <div class="actions"><button class="btn primary" data-act="narrative">${ICON.spark}Draft status narrative</button>${S.chat.length ? `<button class="btn ghost" data-act="clear-chat">New conversation</button>` : ""}</div></div>
-    ${on ? "" : `<p class="note">The AI analyst runs when this page is open in Claude. Here, the status narrative uses the built-in rules engine instead.</p>`}
     <div class="chat" id="chat">${S.chat.map(t => `<div class="msg ${t.role === "user" ? "user" : "ai"}">${t.role === "user" ? esc(t.content) : md(t.content)}</div>`).join("") || `<div><p class="muted" style="margin:0 0 10px">Try one of these:</p><div class="prompts">${SUGGEST.map(p => `<button data-ask="${esc(p)}">${esc(p)}</button>`).join("")}</div></div>`}</div>
     <form class="composer" id="composer" style="margin-top:16px"><textarea id="ask" rows="2" placeholder="Ask about float, delays, cost, recovery options…" ${on ? "" : "disabled"}></textarea><button class="btn primary" id="send" ${on && !S.busy ? "" : "disabled"}>${S.busy ? "Thinking…" : "Ask"}</button>${S.busy ? `<button class="btn" type="button" data-act="stop">Stop</button>` : ""}</form>
   </section>
-  ${S.narrative ? `<section class="panel"><div class="panel-h"><h2>Status narrative</h2><div class="actions"><span class="chip neutral">${esc(S.narrativeSource)}</span><button class="btn sm" data-act="copy-narr">Copy</button><button class="btn sm" data-act="dl-narr">${ICON.dl}Markdown</button></div></div><div class="doc" id="narr-doc">${md(S.narrative)}</div></section>` : ""}`;
+  ${S.narrative ? `<section class="panel"><div class="panel-h"><h2>Status narrative</h2><div class="actions"><button class="btn sm" data-act="copy-narr">Copy</button><button class="btn sm" data-act="dl-narr">${ICON.dl}Markdown</button></div></div><div class="doc" id="narr-doc">${md(S.narrative)}</div></section>` : ""}`;
 }
 
 /* ---- data ---- */
 function vData() {
-  const m = S.m, t = S.tables, dl = !!S.caps.downloads;
+  const m = S.m, t = S.tables;
   const tbls = Object.keys(t).map(k => [k, t[k].length]);
   return `<div class="grid g2">
     <section class="panel"><h2 style="margin-bottom:10px">Load a schedule</h2>
@@ -718,9 +740,8 @@ function vData() {
       <p class="muted" style="font-size:.82rem">Planned dates (target start and finish) serve as the baseline. Dates are computed on a five day working calendar.</p>
     </section>
     <section class="panel"><h2 style="margin-bottom:10px">Exports</h2>
-      ${dl ? "" : `<p class="note">Downloads work when this page is open in Claude.</p>`}
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${[["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}" ${dl ? "" : "disabled"}>${ICON.dl}Save</button></div>`).join("")}
+        ${[["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}">${ICON.dl}Save</button></div>`).join("")}
       </div>
       ${m.loops ? `<p class="tone-bad">Circular logic found: ${esc(m.loops.join(", "))}. Results for these activities are unreliable.</p>` : ""}
     </section></div>`;
@@ -812,7 +833,7 @@ function openActivity(i) {
       ${flags.length ? `<p class="note"><b>Flagged by:</b> ${flags.map(esc).join(", ")}</p>` : ""}
       <div><h3>Predecessors</h3><div class="tbl-wrap"><table><tbody>${a.preds.map(r => rel(r, r.p)).join("") || `<tr><td class="tone-bad">None. This is an open start.</td></tr>`}</tbody></table></div></div>
       <div><h3>Successors</h3><div class="tbl-wrap"><table><tbody>${a.succs.map(r => rel(r, r.s)).join("") || `<tr><td class="tone-bad">None. This is an open end.</td></tr>`}</tbody></table></div></div>
-      <div class="actions"><button class="btn primary" data-ai-act="${i}" ${S.caps.sample ? "" : "disabled"}>${ICON.spark}Ask AI about this activity</button><button class="btn" data-whatif="${i}">What if it slips?</button></div>
+      <div class="actions">${aiOn() ? `<button class="btn primary" data-ai-act="${i}">${ICON.spark}Ask AI about this activity</button>` : ""}<button class="btn" data-whatif="${i}">What if it slips?</button></div>
     </div></aside>`;
 }
 
@@ -839,7 +860,7 @@ const RULES = `You are a senior project controls analyst (planning, scheduling, 
 - Use short paragraphs, "###" headings when the answer has parts, and "-" bullets. No tables. Keep answers under 350 words unless asked for more.`;
 let aborter = null;
 async function ask(q, opts) {
-  if (!S.caps.sample || S.busy) return;
+  if (!aiOn() || S.busy) return;
   S.view = "assistant"; S.chat.push({ role: "user", content: q }); S.busy = true; render();
   const ctx = JSON.stringify(contextPack());
   const turns = [{ role: "user", content: RULES + "\n\nSCHEDULE DATA:\n" + ctx + "\n\nReply with only: Ready." }, { role: "assistant", content: "Ready." }].concat(S.chat);
@@ -848,7 +869,7 @@ async function ask(q, opts) {
   render(); bubble().innerHTML = `<span class="skeleton">Thinking…</span>`;
   aborter = new AbortController();
   try {
-    const { text } = await S.caps.sample(turns, { cache: false, signal: aborter.signal, modelTier: "default", onText: ({ text }) => { S.chat[S.chat.length - 1].content = text; const b = bubble(); if (b) b.innerHTML = md(text); } });
+    const { text } = await aiCall(turns, { cache: false, signal: aborter.signal, modelTier: "default", onText: ({ text }) => { S.chat[S.chat.length - 1].content = text; const b = bubble(); if (b) b.innerHTML = md(text); } });
     S.chat[S.chat.length - 1].content = text;
   } catch (e) {
     const last = S.chat[S.chat.length - 1];
@@ -859,14 +880,14 @@ async function ask(q, opts) {
   const c = $("#chat"); if (c) c.lastElementChild?.scrollIntoView({ block: "nearest" });
 }
 function aiError(code) {
-  return ({ not_granted: "The AI analyst needs your permission to run. Allow it when prompted and ask again.", rate_limited: "Too many requests at once. Wait a moment and ask again.", cancelled: "Stopped." }[code]) || "The analyst could not answer this time. Try again.";
+  return ({ not_granted: "The AI analyst needs your permission to run. Allow it when prompted and ask again.", network: "The analyst could not be reached. Check your connection and try again.", rate_limited: "Too many requests at once. Wait a moment and ask again.", cancelled: "Stopped." }[code]) || "The analyst could not answer this time. Try again.";
 }
 async function makeNarrative() {
-  if (S.caps.sample) {
+  if (aiOn()) {
     S.view = "assistant"; S.narrative = "_Drafting from the schedule data…_"; S.narrativeSource = "AI draft"; render();
     try {
       const prompt = RULES + `\n\nSCHEDULE DATA:\n${JSON.stringify(contextPack())}\n\nWrite the monthly schedule and cost status narrative for the owner's report. Use these "###" sections: Executive summary, Schedule status and critical path, Cost and earned value, Schedule quality (DCMA), Risk outlook, Recommended actions. Up to 550 words.`;
-      const { text } = await S.caps.sample(prompt, { modelTier: "default", onText: ({ text }) => { S.narrative = text; const el = $("#narr-doc"); if (el) el.innerHTML = md(text); } });
+      const { text } = await aiCall(prompt, { modelTier: "default", onText: ({ text }) => { S.narrative = text; const el = $("#narr-doc"); if (el) el.innerHTML = md(text); } });
       S.narrative = text;
     } catch (e) { S.narrative = ruleNarrative(); S.narrativeSource = "Rules engine"; if (e.code !== "cancelled") toast(aiError(e.code) + " Showing the rules engine draft."); }
   } else { S.narrative = ruleNarrative(); S.narrativeSource = "Rules engine"; }
@@ -905,8 +926,15 @@ function md(src) {
 /* ---------------- exports ---------------- */
 const csv = rows => rows.map(r => r.map(v => { const s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(",")).join("\n");
 async function save(filename, data) {
-  if (!S.caps.downloads) { toast("Downloads work when this page is open in Claude."); return; }
-  try { await S.caps.downloads.save({ filename, data }); } catch (e) { if (e && e.code !== "cancelled" && e.code !== "declined") toast("The file was not saved."); }
+  if (S.caps.downloads) {
+    try { await S.caps.downloads.save({ filename, data }); } catch (e) { if (e && e.code !== "cancelled" && e.code !== "declined") toast("The file was not saved."); }
+    return;
+  }
+  const type = /\.csv$/.test(filename) ? "text/csv" : /\.md$/.test(filename) ? "text/markdown" : "application/octet-stream";
+  const url = URL.createObjectURL(new Blob([data], { type: type + ";charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast("Saved " + filename);
 }
 function exportActs() {
   const m = S.m, s = S.s;
@@ -963,7 +991,7 @@ document.addEventListener("click", e => {
   if (ds.whatif) { S.whatIf.act = +ds.whatif; S.view = "risk"; $("#drawer-host").innerHTML = ""; render(); setTimeout(() => $("#wi-out")?.scrollIntoView({ block: "center" }), 50); return; }
   if (ds.delRisk) { S.risks.splice(+ds.delRisk, 1); render(); return; }
   if (ds.aiCheck) { const c = S.d.checks.find(x => x.id === +ds.aiCheck);
-    if (!S.caps.sample) { toast("The AI analyst runs when this page is open in Claude."); return; }
+    if (!aiOn()) return;
     ask(`Explain DCMA check ${c.id} (${c.name}) for this schedule. It shows ${typeof c.value === "number" ? c.value.toFixed(2) : c.value} against a target of ${c.threshold}. For each flagged activity (${[...new Set(c.items)].map(i => S.m.acts[i].code).join(", ")}) say what is wrong and the specific fix in P6.`); return; }
   if (ds.aiAct) { const a = S.m.acts[+ds.aiAct]; $("#drawer-host").innerHTML = ""; ask(`Review activity ${a.code} ${a.name}. Is its logic sound, what is it driving, what happens if it slips, and what should the team do about it?`); return; }
   const act = ds.act;
@@ -973,7 +1001,7 @@ document.addEventListener("click", e => {
   else if (act === "narrative") makeNarrative();
   else if (act === "clear-chat") { S.chat = []; render(); }
   else if (act === "stop") aborter?.abort();
-  else if (act === "ai-health") { if (!S.caps.sample) { S.narrative = ruleNarrative(); S.narrativeSource = "Rules engine"; S.view = "assistant"; render(); return; } ask("Build a prioritized fix plan for every failing DCMA check in this schedule. Group fixes by the order a scheduler should make them in P6, name the activity codes, and say which fixes will change the forecast finish."); }
+  else if (act === "ai-health") { if (!aiOn()) { S.narrative = ruleNarrative(); S.narrativeSource = "Rules engine"; S.view = "assistant"; render(); return; } ask("Build a prioritized fix plan for every failing DCMA check in this schedule. Group fixes by the order a scheduler should make them in P6, name the activity codes, and say which fixes will change the forecast finish."); }
   else if (act === "run-mc") { S.mcOpts = { iterations: +$("#mc-n").value, low: +$("#mc-low").value || 0.9, likely: +$("#mc-likely").value || 1, high: +$("#mc-high").value || 1.3 }; S.mc = E.monteCarlo(S.m, Object.assign({}, S.mcOpts, { risks: S.risks, seed: Date.now() })); render(); toast(`Ran ${S.mcOpts.iterations.toLocaleString()} simulations`); }
   else if (act === "add-risk") { const a = S.m.acts.find(x => x.status !== "C" && !x.mile); S.risks.push({ name: "New risk event", act: a ? a.i : 0, prob: 0.3, days: 5, on: true }); render(); }
   else if (act === "dl-xer") save("Northgate_Distribution_Center_NDC-2026.xer", SAMPLE_XER);
