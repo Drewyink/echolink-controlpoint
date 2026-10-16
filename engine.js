@@ -232,10 +232,11 @@
   }
 
   // Walk back from the latest-finishing activity through driving relationships.
-  function drivingPath(m, ES, EF, dur, PF) {
+  function drivingPath(m, ES, EF, dur, PF, from) {
     const set = new Set();
     let ends = [];
-    m.acts.forEach((a, i) => { if (EF[i] === PF && a.status !== "C") ends.push(i); });
+    if (from != null) ends = [from];
+    else m.acts.forEach((a, i) => { if (EF[i] === PF && a.status !== "C") ends.push(i); });
     const stack = ends.slice();
     while (stack.length) {
       const i = stack.pop();
@@ -503,6 +504,136 @@
     return { finishes, P10: q(0.1), P50: q(0.5), P80: q(0.8), P90: q(0.9), crit: Array.from(crit, c => c / N), N };
   }
 
+  /* ---------- Update comparison ---------- */
+  const relKey = (m, r) => m.acts[r.p].code + ">" + m.acts[r.s].code;
+  function compare(mP, sP, mC, sC) {
+    const out = { prevDate: mP.dataDate, curDate: mC.dataDate, elapsed: mC.D - mP.D };
+    out.prevFinish = projectFinishDate(mP, sP); out.curFinish = projectFinishDate(mC, sC);
+    out.finishDelta = idx(out.curFinish) - idx(out.prevFinish);
+    const P = {}; mP.acts.forEach(a => P[a.code] = a);
+    const C = {}; mC.acts.forEach(a => C[a.code] = a);
+    out.added = mC.acts.filter(a => !P[a.code]).map(a => a.i);
+    out.deleted = mP.acts.filter(a => !C[a.code]).map(a => ({ code: a.code, name: a.name }));
+    out.rows = []; out.durChanges = []; out.cstrChanges = []; out.remIncreases = [];
+    out.started = []; out.finished = []; out.missed = [];
+    mC.acts.forEach(c => {
+      const p = P[c.code]; if (!p) return;
+      const pf = finishDate(mP, sP, p.i), cf = finishDate(mC, sC, c.i);
+      const row = { i: c.i, code: c.code, name: c.name, pf, cf, delta: idx(cf) - idx(pf), ptf: sP.TF[p.i], ctf: sC.TF[c.i],
+        pDrv: sP.driving.has(p.i), cDrv: sC.driving.has(c.i), pStatus: p.status, cStatus: c.status, pPct: p.pct, cPct: c.pct };
+      out.rows.push(row);
+      if (!c.mile && p.origDur !== c.origDur) out.durChanges.push({ i: c.i, code: c.code, name: c.name, from: p.origDur, to: c.origDur, drv: row.cDrv });
+      if (p.cstr !== c.cstr || (p.cstrDate || 0) !== (c.cstrDate || 0)) out.cstrChanges.push({ i: c.i, code: c.code, name: c.name, from: p.cstr ? (CSTR_LABEL[p.cstr] || p.cstr) + " " + fmt(p.cstrDate) : "None", to: c.cstr ? (CSTR_LABEL[c.cstr] || c.cstr) + " " + fmt(c.cstrDate) : "None", added: !p.cstr && !!c.cstr, hard: !!HARD[c.cstr] });
+      if (c.status !== "C" && p.status !== "C" && !c.mile) {
+        const worked = c.status === "A" ? Math.max(0, mC.D - Math.max(mP.D, c.actStart != null ? idx(c.actStart) : mC.D)) : 0;
+        const expected = Math.max(0, p.remDur - worked);
+        if (c.remDur > expected + 2) out.remIncreases.push({ i: c.i, code: c.code, name: c.name, expected, actual: c.remDur, drv: row.cDrv });
+      }
+      if (p.status === "N" && c.status !== "N") out.started.push(c.i);
+      if (p.status !== "C" && c.status === "C") out.finished.push(c.i);
+      if (p.status !== "C" && c.status !== "C" && !c.mile && pf <= mC.dataDate) out.missed.push(c.i);
+    });
+    out.rows.sort((a, b) => b.delta - a.delta);
+    const PR = {}; mP.rels.forEach(r => PR[relKey(mP, r)] = r);
+    const CR = {}; mC.rels.forEach(r => CR[relKey(mC, r)] = r);
+    const lbl = r => (REL_LABEL[r.type] || r.type) + (r.lag ? (r.lag > 0 ? " +" : " ") + r.lag : "");
+    out.relAdded = mC.rels.filter(r => !PR[relKey(mC, r)]).map(r => ({ key: relKey(mC, r), pred: r.p, succ: r.s, type: lbl(r) }));
+    out.relDeleted = mP.rels.filter(r => !CR[relKey(mP, r)]).map(r => ({ key: relKey(mP, r), predCode: mP.acts[r.p].code, succCode: mP.acts[r.s].code, type: lbl(r), r }));
+    out.relChanged = mC.rels.filter(r => PR[relKey(mC, r)] && (PR[relKey(mC, r)].type !== r.type || PR[relKey(mC, r)].lag !== r.lag)).map(r => ({ key: relKey(mC, r), pred: r.p, succ: r.s, from: lbl(PR[relKey(mC, r)]), to: lbl(r) }));
+    out.drvIn = out.rows.filter(r => r.cDrv && !r.pDrv && r.cStatus !== "C").map(r => r.i);
+    out.drvOut = out.rows.filter(r => r.pDrv && !r.cDrv && r.cStatus !== "C").map(r => r.i);
+    out.attribution = attribute(mP, mC, sC, out);
+    return out;
+  }
+  // What would the forecast be if each edit made this period were reversed? Positive days = the edit pulled the finish earlier.
+  function attribute(mP, mC, sC, cmp) {
+    const PF0 = sC.PF, res = [];
+    const P = {}; mP.acts.forEach(a => P[a.code] = a);
+    cmp.cstrChanges.forEach(ch => {
+      const a = mC.acts[ch.i], p = P[a.code], keep = [a.cstr, a.cstrDate];
+      a.cstr = p.cstr; a.cstrDate = p.cstrDate;
+      const pf = forward(mC, durations(mC)).PF;
+      a.cstr = keep[0]; a.cstrDate = keep[1];
+      if (pf !== PF0) res.push({ kind: "constraint", code: a.code, i: a.i, text: `${ch.added ? "Added" : "Changed"} constraint on ${a.code} ${a.name} (${ch.to})`, days: pf - PF0 });
+    });
+    cmp.durChanges.forEach(ch => {
+      const a = mC.acts[ch.i]; if (a.status !== "N") return;
+      const extra = new Float64Array(mC.acts.length); extra[ch.i] = ch.from - ch.to;
+      const pf = forward(mC, durations(mC, extra)).PF;
+      if (pf !== PF0) res.push({ kind: "duration", code: a.code, i: a.i, text: `Original duration of ${a.code} ${a.name} changed from ${ch.from} to ${ch.to} days`, days: pf - PF0 });
+    });
+    cmp.relDeleted.forEach(d => {
+      const C = {}; mC.acts.forEach(a => C[a.code] = a);
+      const p = C[d.predCode], s = C[d.succCode]; if (!p || !s) return;
+      const rel = { p: p.i, s: s.i, type: d.r.type, lag: d.r.lag };
+      p.succs.push(rel); s.preds.push(rel); mC.rels.push(rel);
+      const topo0 = mC.topo; mC.topo = topoSort(mC);
+      const pf = forward(mC, durations(mC)).PF;
+      p.succs.pop(); s.preds.pop(); mC.rels.pop(); mC.topo = topo0;
+      if (pf !== PF0) res.push({ kind: "logic", code: d.predCode, i: p.i, text: `Deleted relationship ${d.predCode} to ${d.succCode}`, days: pf - PF0 });
+    });
+    return res.sort((a, b) => b.days - a.days);
+  }
+
+  /* ---------- Recovery optimizer ---------- */
+  function recovery(m, s, opts) {
+    opts = opts || {};
+    const crashPct = opts.crashPct ?? 0.25, premium = opts.premium ?? 0.15, overlap = opts.overlap ?? 0.5;
+    const T = opts.target; // optional milestone index to recover; otherwise the project finish
+    const PF0 = T != null ? s.EF[T] : s.PF, options = [];
+    const path = T != null ? drivingPath(m, s.ES, s.EF, s.dur, s.PF, T) : s.driving;
+    const drv = [...path].filter(i => m.acts[i].status !== "C");
+    drv.forEach(i => {
+      const a = m.acts[i];
+      if (a.mile || a.remDur < 5) return;
+      const cut = Math.max(1, Math.round(a.remDur * crashPct));
+      options.push({ id: "crash:" + a.code, kind: "Crash", i, title: `Add a second crew or extended shifts on ${a.code} ${a.name}`,
+        detail: `Cuts remaining duration from ${a.remDur} to ${a.remDur - cut} days.`, cut, cost: Math.max(5000, Math.round((a.etc || 0) * premium)),
+        risk: "Crew availability and productivity loss on congested work fronts." });
+    });
+    m.rels.forEach(r => {
+      if (r.type !== "PR_FS" || r.lag < 0) return;
+      if (!path.has(r.p) || !path.has(r.s)) return;
+      const p = m.acts[r.p], q = m.acts[r.s];
+      if (q.status !== "N" || p.mile || q.mile || p.status === "C" || p.remDur < 6) return;
+      const lead = Math.max(1, Math.floor(p.remDur * overlap));
+      options.push({ id: "ff:" + p.code + ">" + q.code, kind: "Fast track", r, lead, title: `Start ${q.code} ${q.name} before ${p.code} finishes`,
+        detail: `Overlaps the two activities by ${lead} working days.`, cost: 0, risk: "Rework if the earlier work changes. Needs coordination between crews." });
+    });
+    options.forEach(o => { o.days = PF0 - evalPlan(m, [o], T); });
+    const useful = options.filter(o => o.days > 0).sort((a, b) => b.days - a.days || a.cost - b.cost);
+    // Greedy plan: keep each option only if it still adds days on top of those already chosen
+    const plan = []; let best = PF0;
+    useful.forEach(o => { const pf = evalPlan(m, plan.concat(o), T); if (pf < best) { plan.push(o); best = pf; } });
+    // When a target date exists, drop the most expensive options the plan does not need to meet it
+    const need = T != null && s.TF[T] < 0 ? PF0 + s.TF[T] : null;
+    if (need != null && best <= need) {
+      plan.slice().sort((x, y) => y.cost - x.cost || x.days - y.days).forEach(o => {
+        const rest = plan.filter(q => q !== o);
+        if (evalPlan(m, rest, T) <= need) plan.splice(plan.indexOf(o), 1);
+      });
+    }
+    plan.forEach(o => o.recommended = true);
+    return { options: useful, plan, PF0, target: T, need };
+  }
+  function evalPlan(m, list, T) {
+    const extra = new Float64Array(m.acts.length), saved = [];
+    list.forEach(o => {
+      if (o.kind === "Crash") extra[o.i] -= o.cut;
+      else { saved.push([o.r, o.r.lag]); o.r.lag = -o.lead; }
+    });
+    const f = forward(m, durations(m, extra));
+    saved.forEach(([r, lag]) => r.lag = lag);
+    return T != null ? f.EF[T] : f.PF;
+  }
+  function applyPlan(m, list) { // returns a full schedule with the plan applied, then restores the model
+    const extra = new Float64Array(m.acts.length), saved = [];
+    list.forEach(o => { if (o.kind === "Crash") extra[o.i] -= o.cut; else { saved.push([o.r, o.r.lag]); o.r.lag = -o.lead; } });
+    const sch = schedule(m, extra);
+    saved.forEach(([r, lag]) => r.lag = lag);
+    return sch;
+  }
+
   /* ---------- XER writer (for the built-in sample and exports) ---------- */
   function writeXER(tables, order) {
     const out = ["ERMHDR\t20.12\t" + new Date().toISOString().slice(0, 10) + "\tProject\tadmin\tControlPoint\tdbxDatabaseNoName\tProject Management\tUSD"];
@@ -516,6 +647,6 @@
     return out.join("\r\n");
   }
 
-  const api = { parseDate, idx, dateOf, fmt, parseXER, buildModel, schedule, forward, durations, drivingPath, startDate, finishDate, projectFinishDate, dcma, evm, monteCarlo, writeXER, topWbs, CSTR_LABEL, REL_LABEL, HARD, DAY };
+  const api = { parseDate, idx, dateOf, fmt, parseXER, buildModel, schedule, forward, durations, drivingPath, startDate, finishDate, projectFinishDate, dcma, evm, monteCarlo, writeXER, topWbs, compare, recovery, evalPlan, applyPlan, CSTR_LABEL, REL_LABEL, HARD, DAY };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.PCEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

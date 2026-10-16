@@ -2,12 +2,23 @@
 
 Project controls intelligence for Primavera P6 schedules.
 
+## Features
+- Live critical path (CPM) recalculated from P6 logic
+- DCMA 14 point schedule health check with fixes
+- Earned value: SPI, CPI, TCPI, earned schedule, three EAC methods
+- Monte Carlo risk with a risk register and what if analysis
+- Update comparison: slips, logic and duration edits, new constraints, and how much finish movement is real
+- Recovery optimizer: crash and fast track options, lowest cost plan to meet the target
+- One click owner report (HTML, print or save as PDF)
+- Request a demo form
+
 ## Files
 - index.html: the complete app in one file, served by Render. Open it in any browser.
 - app.html: page template (layout, styles, views, AI and export logic)
 - engine.js: analytics engine (XER parser, CPM, DCMA 14, earned value, Monte Carlo)
 - gen.js: generates the Northgate Distribution Center sample (northgate.xer)
-- northgate.xer: sample P6 schedule
+- northgate.xer: sample P6 schedule (update of 5 Oct 2026)
+- northgate_prev.xer: previous month's update (7 Sep 2026) for the comparison
 - logo.png: Echolink logo with a transparent background
 - build.py: assembles index.html from the pieces above
 
@@ -22,4 +33,6 @@ Project controls intelligence for Primavera P6 schedules.
   `<script>window.CONTROLPOINT_CONFIG = { aiEndpoint: "/api/ai" }</script>`.
   The endpoint receives POST {messages:[{role, content}]} and returns {text}.
   When it is set, the chat analyst, "Explain with AI" and AI drafted narratives appear.
+- Demo requests: by default the form opens the visitor's email app addressed to info@echolinksolutions.com.
+  To collect requests directly, add `demoEndpoint` (for example a Formspree URL) to CONTROLPOINT_CONFIG.
 - Dates use a five day working calendar. Planned dates in the XER serve as the baseline.

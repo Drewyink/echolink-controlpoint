@@ -215,7 +215,7 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 .readout .row b { font: 600 1.25rem/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--hero-ink); }
 .readout .row b.bad { color: #FF8D90; } .readout .row b.warn { color: #F2C46B; }
 .readout svg { display: block; width: 100%; height: 54px; margin-top: 6px; }
-.feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 255px), 1fr)); gap: 14px; }
 .feat button { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--panel-shadow); transition: border-color .15s, transform .15s; }
 .feat button:hover { border-color: var(--accent); transform: translateY(-1px); }
 .feat button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -233,6 +233,23 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 .who span { padding: 6px 12px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font-size: 0.86rem; color: var(--ink-2); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 0.84rem; color: var(--ink-3); padding-top: 14px; border-top: 1px solid var(--line); }
 .foot .sel { user-select: all; color: var(--ink-2); }
+/* comparison, recovery, demo */
+.cmp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px; }
+.demo { background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 160%); }
+.demo-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 28px; align-items: start; }
+.ticks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.ticks li { padding-left: 24px; position: relative; color: var(--ink-2); }
+.ticks li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 10px; height: 5px; border-left: 2px solid var(--good); border-bottom: 2px solid var(--good); transform: rotate(-45deg); }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fields label { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; font-weight: 600; color: var(--ink-2); min-width: 0; }
+.fields label.full { grid-column: 1 / -1; }
+.fields input, .fields select, .fields textarea { font-weight: 400; font-size: 0.92rem; padding: 8px 10px; width: 100%; }
+.dm-status { margin: 10px 0 0; font-size: 0.88rem; min-height: 1.2em; }
+.sel { user-select: all; }
+.rail-cta { all: unset; cursor: pointer; display: block; text-align: center; padding: 9px 10px; border-radius: 6px; background: #E8641E; color: #fff; font-weight: 600; font-size: 0.86rem; margin-bottom: 10px; }
+.rail-cta:hover { filter: brightness(1.08); } .rail-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 860px) { .demo-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .fields { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); } .steps li + li { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 10px; } }
 @media (max-width: 760px) {
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -252,11 +269,12 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
   <aside class="rail">
     <div class="brand"><img class="logo" src="/*LOGO*/" alt="Echolink Solutions" width="401" height="75"><span class="product">ControlPoint</span></div>
     <nav class="nav" id="nav" aria-label="Workspaces"></nav>
-    <div class="rail-foot">Project controls intelligence for P6 schedules. Your file is processed in this browser.</div>
+    <div class="rail-foot"><button class="rail-cta" data-act="demo">Request a demo</button>Project controls intelligence for P6 schedules. Your file is processed in this browser.</div>
   </aside>
   <main class="main"><div class="wrap" id="root"></div></main>
 </div>
 <input type="file" id="file" accept=".xer,.txt" hidden>
+<input type="file" id="file-prev" accept=".xer,.txt" hidden>
 <div id="drawer-host"></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -265,6 +283,7 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 </script>
 <script>
 const SAMPLE_XER = /*SAMPLE*/;
+const SAMPLE_PREV_XER = /*SAMPLE_PREV*/;
 const E = window.PCEngine;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -305,8 +324,8 @@ async function aiCall(input, opts) {
   return { text };
 }
 const VIEWS = [
-  ["welcome", "Welcome"], ["overview", "Command center"], ["schedule", "Schedule"], ["health", "Health check"],
-  ["cost", "Cost & EVM"], ["risk", "Risk & what if"], ["assistant", "AI analyst"], ["data", "Data & exports"]
+  ["welcome", "Welcome"], ["overview", "Command center"], ["schedule", "Schedule"], ["compare", "Compare updates"], ["health", "Health check"],
+  ["cost", "Cost & EVM"], ["risk", "Risk & what if"], ["recover", "Recovery plan"], ["assistant", "AI analyst"], ["data", "Data & exports"]
 ];
 
 function load(text, source) {
@@ -325,6 +344,8 @@ function selectProject(id) {
   if (S.source === "sample") { S.m.title = "Northgate Distribution Center"; }
   S.risks = S.source === "sample" ? defaultRisks(S.m) : [];
   S.chat = []; S.narrative = null; S.whatIf.act = null;
+  S.prev = null; S.cmp = null;
+  if (S.source === "sample") { try { S.prev = { m: E.buildModel(E.parseXER(SAMPLE_PREV_XER)), name: "Sample update of 7 Sep 2026" }; } catch (e) { S.prev = null; } }
   recompute();
 }
 function defaultRisks(m) {
@@ -341,6 +362,8 @@ function recompute() {
   S.d = E.dcma(S.m, S.s);
   S.ev = E.evm(S.m, S.s);
   S.mc = E.monteCarlo(S.m, Object.assign({}, S.mcOpts, { risks: S.risks }));
+  computeRecovery();
+  computeCompare();
   render();
 }
 
@@ -373,6 +396,14 @@ function alerts() {
   const fails = d.checks.filter(c => !c.pass).map(c => c.name);
   if (fails.length) out.push({ sev: fails.length > 5 ? "bad" : "warn", title: `${fails.length} of 14 DCMA checks fail`, body: fails.slice(0, 6).join(", ") + (fails.length > 6 ? " and more" : "") + ".", go: "health" });
   if (f.pOnTime != null) out.push({ sev: f.pOnTime < 0.5 ? "bad" : f.pOnTime < 0.8 ? "warn" : "good", title: `${Math.round(f.pOnTime * 100)}% chance of meeting ${f.fm.name.toLowerCase()}`, body: `Monte Carlo P50 ${E.fmt(f.p50)}, P80 ${E.fmt(f.p80)} across ${S.mc.N.toLocaleString()} runs.`, go: "risk" });
+  if (S.rec && S.rec.plan.length) {
+    const x = recoveryResult(S.rec.plan);
+    out.splice(1, 0, { sev: "good", title: `Recovery plan found: ${x.gained} working days back for ${money(x.cost)}`, body: `${S.rec.plan.length} actions on the driving path${x.tgt ? (x.late1 <= 0 ? ` bring ${x.tgt.name.toLowerCase()} back to ${E.fmt(x.f1)}, inside its target` : ` move ${x.tgt.name.toLowerCase()} to ${E.fmt(x.f1)}`) : ""}.`, go: "recover" });
+  }
+  if (S.cmp && S.cmp.findings.length) {
+    const c0 = S.cmp.findings[0];
+    out.splice(1, 0, { sev: c0.sev, title: `Since the last update: ${c0.title.charAt(0).toLowerCase() + c0.title.slice(1)}`, body: c0.body, go: "compare" });
+  }
   return out;
 }
 
@@ -382,7 +413,7 @@ function render() {
   const fails = S.d ? S.d.checks.filter(c => !c.pass).length : 0;
   $("#nav").innerHTML = VIEWS.map(([k, l]) => [k, k === "assistant" && !aiOn() ? "Status narrative" : l]).map(([k, l]) => `<button data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "health" && S.d ? `<span class="cnt ${fails ? "bad" : ""}">${14 - fails}/14</span>` : ""}</button>`).join("");
   const R = $("#root");
-  R.innerHTML = (S.view === "welcome" ? "" : topbar()) + ({ welcome: vWelcome, overview: vOverview, schedule: vSchedule, health: vHealth, cost: vCost, risk: vRisk, assistant: vAssistant, data: vData }[S.view] || vOverview)();
+  R.innerHTML = (S.view === "welcome" ? "" : topbar()) + ({ welcome: vWelcome, overview: vOverview, schedule: vSchedule, compare: vCompare, health: vHealth, cost: vCost, risk: vRisk, recover: vRecover, assistant: vAssistant, data: vData }[S.view] || vOverview)();
   R.classList.remove("fade"); void R.offsetWidth; R.classList.add("fade");
   afterRender();
 }
@@ -398,6 +429,7 @@ function topbar() {
     <div class="actions">${projSel}
       <button class="btn" data-act="upload">${ICON.upload}Load P6 XER</button>
       ${S.source !== "sample" ? `<button class="btn ghost" data-act="sample">Use sample</button>` : ""}
+      <button class="btn primary" data-act="report">${ICON.dl}Owner report</button>
     </div>
   </header>`;
 }
@@ -449,6 +481,8 @@ const FICON = {
   risk: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 16.5h14"/><rect x="4" y="11" width="2.4" height="5.5"/><rect x="8" y="6" width="2.4" height="10.5"/><rect x="12" y="9" width="2.4" height="7.5"/></svg>',
   ai: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2 11.8 8.2 18 10l-6.2 1.8L10 18l-1.8-6.2L2 10l6.2-1.8z"/></svg>',
   out: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3.5 3.5v11.5H5z"/><path d="M12 2.5V6h3.5M8 10.5h5M8 13.5h5"/></svg>',
+  diff: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="6" height="14" rx="1"/><rect x="11.5" y="3" width="6" height="14" rx="1"/><path d="M4.5 7h2M4.5 10h2M13.5 7h2M13.5 10h2M13.5 13h2"/></svg>',
+  rec: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 15c3-6 6-9 13-10"/><path d="m12 3.5 4 1.5-1.5 4"/><path d="M3 18h14"/></svg>',
 };
 function vWelcome() {
   const f = facts(), ev = S.ev, d = S.d, sample = S.source === "sample";
@@ -459,17 +493,19 @@ function vWelcome() {
     ["cpm", "Live critical path", "Recalculates every early date, late date and float value from your P6 logic, and traces the exact chain of work driving the finish.", "schedule", "Open schedule"],
     ["health", "DCMA 14 point health check", "Scores schedule quality against the standard used in federal reviews, names every offending activity, and explains how to fix it in P6.", "health", "Run health check"],
     ["evm", "Earned value and forecasting", "Calculates SPI, CPI, TCPI, earned schedule and three estimates at completion, with an S curve by WBS.", "cost", "See cost performance"],
+    ["diff", "Update comparison", "Compares this month's update with last month's and exposes every slip, deleted relationship, cut duration and new constraint, including how much of the finish movement is real.", "compare", "Compare updates"],
+    ["rec", "Recovery optimizer", "Tests crashing and fast tracking options across the driving path and finds the lowest cost plan that brings the project back on target.", "recover", "Build a recovery plan"],
     ["risk", "Monte Carlo risk", "Simulates thousands of possible futures with your risk register to give P50 and P80 dates and the odds of meeting the target.", "risk", "Simulate risk"],
     aiOn() ? ["ai", "AI controls analyst", "Ask questions in plain language and get answers grounded in your schedule, plus a monthly status narrative drafted in one click.", "assistant", "Ask the analyst"]
       : ["ai", "Automated status narrative", "Drafts a monthly status report covering schedule, critical path, cost, schedule quality and risk, ready to copy into your owner report.", "assistant", "Draft a narrative"],
-    ["out", "Reports and exports", "Export the activity register, DCMA report and earned value report, ready for an owner submission or a PMO review.", "data", "View exports"],
+    ["out", "One click owner report", "Produces a branded monthly report with the cost curve, driving path, health check, risk outlook and recovery plan, ready to print or save as PDF.", "data", "Get the report"],
   ];
   return `<section class="hero">
     <div>
       <div class="eyebrow">Echolink ControlPoint</div>
       <h1>Project controls intelligence for <em>Primavera P6</em> schedules</h1>
       <p class="lede">ControlPoint turns a P6 export into a clear picture of where your project really stands. It recalculates the critical path, checks schedule quality, measures cost and schedule performance, predicts the finish date under risk, and explains the results in plain language.</p>
-      <div class="actions"><button class="btn primary" data-go="overview">Explore the sample project</button><button class="btn" data-act="upload">${ICON.upload}Load your P6 schedule</button></div>
+      <div class="actions"><button class="btn primary" data-go="overview">Explore the sample project</button><button class="btn" data-act="upload">${ICON.upload}Load your P6 schedule</button><button class="btn" data-act="demo">Request a demo</button></div>
       <div class="fine">${ICON.ok}Your file is analyzed in your browser and is never uploaded.</div>
     </div>
     <div class="readout" aria-label="Live readout from the loaded project">
@@ -491,17 +527,259 @@ function vWelcome() {
     <ol class="steps" style="margin:0;padding:0">
       <li><span class="n">STEP 1</span><h3>Export from P6</h3><p>In Primavera P6, export your project as an XER file. ControlPoint reads the activities, logic, baseline dates and resource costs.</p></li>
       <li><span class="n">STEP 2</span><h3>Analyze in seconds</h3><p>The critical path, DCMA checks, earned value and risk simulation all run the moment the file loads.</p></li>
-      <li><span class="n">STEP 3</span><h3>Act and report</h3><p>Work the needs attention list, test recovery options with what if, and send the status narrative and reports to your stakeholders.</p></li>
+      <li><span class="n">STEP 3</span><h3>Act and report</h3><p>Compare against last month, adopt a recovery plan, and send the owner report to your stakeholders.</p></li>
     </ol>
   </section>
   <section style="display:flex;flex-direction:column;gap:10px">
     <h2>Who it is for</h2>
     <div class="who"><span>Project managers</span><span>Planners and schedulers</span><span>Project controls analysts</span><span>PMO leaders</span><span>Owner's representatives</span><span>Federal and defense programs reporting against EVMS</span></div>
   </section>
+  ${demoSection()}
   <div class="foot">
     <span>Built by Echolink Solutions · The Verifiable Integration Layer · <span class="sel">info@echolinksolutions.com</span></span>
     <label style="display:inline-flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="skip-welcome" ${skip ? "checked" : ""}>Skip this introduction next time</label>
   </div>`;
+}
+
+/* ---- update comparison ---- */
+function loadPrev(text, name) {
+  const t = E.parseXER(text);
+  const cur = (S.tables.PROJECT || [])[0] || {};
+  const match = (t.PROJECT || []).find(p => p.proj_short_name === cur.proj_short_name) || (t.PROJECT || [])[0] || {};
+  const m = E.buildModel(t, { projId: match.proj_id });
+  if (m.dataDate >= S.m.dataDate) throw new Error(`The previous update must have an earlier data date than the loaded schedule (${E.fmt(S.m.dataDate)}).`);
+  S.prev = { m, name };
+  computeCompare();
+}
+function computeCompare() {
+  if (!S.prev) { S.cmp = null; return; }
+  S.prev.s = E.schedule(S.prev.m);
+  S.prev.ev = E.evm(S.prev.m, S.prev.s);
+  S.cmp = E.compare(S.prev.m, S.prev.s, S.m, S.s);
+  S.cmp.findings = compareFindings(S.cmp);
+}
+function compareFindings(c) {
+  const m = S.m, out = [];
+  const editsEarlier = c.attribution.filter(x => x.days > 0), editDays = editsEarlier.reduce((a, x) => a + x.days, 0);
+  if (c.finishDelta < 0) {
+    const n = -c.finishDelta;
+    out.push({ sev: editDays >= n ? "bad" : editDays > 0 ? "warn" : "good", title: `Forecast finish improved ${n} working days`,
+      body: editDays > 0 ? `${Math.min(editDays, n)} of those days come from schedule edits, not progress: ${editsEarlier.map(x => x.text).join("; ")}. Without these edits the forecast would be ${E.fmt(E.dateOf(E.idx(c.curFinish) + editDays))}.` : "The improvement is supported by progress, not by schedule edits." });
+  } else if (c.finishDelta > 0) {
+    const movers = c.rows.filter(r => r.cDrv && r.delta > 0 && r.cStatus !== "C").slice(0, 3);
+    out.push({ sev: "bad", title: `Forecast finish slipped ${c.finishDelta} working days`, body: movers.length ? `The driving activities that moved most were ${movers.map(r => `${r.code} ${r.name} (${r.delta} days)`).join(", ")}.` : "Review the activities that moved most in the table below." });
+  } else out.push({ sev: "good", title: "Forecast finish held steady", body: `The forecast stayed at ${E.fmt(c.curFinish)}.` });
+  c.durChanges.forEach(x => {
+    const a = m.acts[x.i];
+    if (x.to < x.from) out.push({ sev: x.drv ? "bad" : "warn", title: `${x.code} original duration cut from ${x.from} to ${x.to} days`, body: `${x.name}${a.status === "N" ? " has not started, so no progress supports the change" : ""}. ${x.drv ? "It is on the driving path, so the cut moves the finish date. " : ""}Ask for the basis of estimate before accepting it.` });
+    else out.push({ sev: "warn", title: `${x.code} original duration increased from ${x.from} to ${x.to} days`, body: `${x.name}. Confirm the reason and whether the baseline should be revised.` });
+  });
+  c.relDeleted.forEach(x => {
+    const p = m.acts.find(a => a.code === x.predCode);
+    const open = p && p.succs.length === 0;
+    out.push({ sev: open ? "bad" : "warn", title: `Logic deleted: ${x.predCode} to ${x.succCode}`, body: open ? `${p.code} ${p.name} now has no successor. Delays on it can no longer reach the finish date.` : "Confirm the relationship was removed on purpose." });
+  });
+  if (c.relAdded.length) out.push({ sev: "warn", title: `${c.relAdded.length} relationship${c.relAdded.length > 1 ? "s" : ""} added`, body: c.relAdded.slice(0, 5).map(x => `${m.acts[x.pred].code} to ${m.acts[x.succ].code} (${x.type})`).join(", ") + "." });
+  if (c.relChanged.length) out.push({ sev: "warn", title: `${c.relChanged.length} relationship${c.relChanged.length > 1 ? "s" : ""} changed type or lag`, body: c.relChanged.slice(0, 5).map(x => `${m.acts[x.pred].code} to ${m.acts[x.succ].code} (${x.from} became ${x.to})`).join(", ") + "." });
+  c.cstrChanges.forEach(x => {
+    const at = c.attribution.find(y => y.kind === "constraint" && y.code === x.code);
+    out.push({ sev: x.hard ? "bad" : "warn", title: `${x.added ? "Constraint added to" : "Constraint changed on"} ${x.code}`, body: `${x.name}: ${x.from} became ${x.to}.${x.hard ? " Hard constraints override logic, so the dates no longer come from the network." : ""}${at ? ` Removing it would move the finish ${Math.abs(at.days)} days ${at.days > 0 ? "later" : "earlier"}.` : ""}` });
+  });
+  c.remIncreases.forEach(x => out.push({ sev: x.drv ? "bad" : "warn", title: `Remaining duration grew on ${x.code}`, body: `${x.name} should have about ${x.expected} days left after this period. The update shows ${x.actual}.${x.drv ? " It is on the driving path." : ""}` }));
+  c.drvIn.forEach(i => out.push({ sev: "warn", title: `${m.acts[i].code} moved onto the driving path`, body: `${m.acts[i].name} now drives the finish date. It did not in the previous update.` }));
+  if (c.missed.length) out.push({ sev: "warn", title: `${c.missed.length} activit${c.missed.length > 1 ? "ies" : "y"} forecast to finish by now are still open`, body: c.missed.slice(0, 6).map(i => m.acts[i].code).join(", ") + "." });
+  return out;
+}
+function effectFor(kind, code) {
+  const a = S.cmp.attribution.find(x => x.kind === kind && x.code === code);
+  if (!a) return `<span class="muted">No effect</span>`;
+  return a.days > 0 ? `<span class="tone-bad">${a.days}d earlier finish</span>` : `<span class="tone-bad">${-a.days}d later finish</span>`;
+}
+function vCompare() {
+  const c = S.cmp, m = S.m;
+  if (!c) return `<section class="panel"><h2>Compare two updates</h2>
+    <p class="muted" style="max-width:70ch">Load last period's P6 export to see exactly what changed: which activities slipped, which logic was added or deleted, which durations were cut, which constraints appeared, and how much of the finish date movement comes from real progress rather than schedule edits.</p>
+    <div class="actions"><button class="btn primary" data-act="upload-prev">${ICON.upload}Load previous update</button>${S.source === "sample" ? `<button class="btn" data-act="sample-prev">Use the sample previous month</button>` : ""}</div></section>`;
+  const p = S.prev, evGain = S.ev.EV - p.ev.EV;
+  const logicN = c.relAdded.length + c.relDeleted.length + c.relChanged.length;
+  const changes = [
+    ...c.durChanges.map(x => ({ type: "Original duration", i: x.i, code: x.code, name: x.name, before: x.from + " days", after: x.to + " days", fx: effectFor("duration", x.code) })),
+    ...c.remIncreases.map(x => ({ type: "Remaining duration", i: x.i, code: x.code, name: x.name, before: x.expected + " days expected", after: x.actual + " days", fx: `<span class="muted">Moves with progress</span>` })),
+    ...c.cstrChanges.map(x => ({ type: "Constraint", i: x.i, code: x.code, name: x.name, before: x.from, after: x.to, fx: effectFor("constraint", x.code) })),
+    ...c.relDeleted.map(x => ({ type: "Logic deleted", i: (m.acts.find(a => a.code === x.predCode) || {}).i, code: x.predCode + " → " + x.succCode, name: "", before: x.type, after: "Removed", fx: effectFor("logic", x.predCode) })),
+    ...c.relAdded.map(x => ({ type: "Logic added", i: x.succ, code: m.acts[x.pred].code + " → " + m.acts[x.succ].code, name: "", before: "None", after: x.type, fx: "" })),
+    ...c.relChanged.map(x => ({ type: "Logic changed", i: x.succ, code: m.acts[x.pred].code + " → " + m.acts[x.succ].code, name: "", before: x.from, after: x.to, fx: "" })),
+  ];
+  const movers = c.rows.filter(r => r.cStatus !== "C" && r.delta !== 0).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 12);
+  const chips = list => list.length ? `<div class="codes">${list.map(i => `<button data-act-open="${i}" title="${esc(m.acts[i].name)}">${esc(m.acts[i].code)}</button>`).join("")}</div>` : `<span class="muted">None</span>`;
+  return `<section class="panel cmp-head">
+      <div style="min-width:0"><div class="eyebrow">Update comparison</div><h2 class="num">${E.fmt(c.prevDate)} <span class="muted">→</span> ${E.fmt(c.curDate)}</h2>
+      <p class="muted" style="margin:4px 0 0;font-size:.88rem">${c.elapsed} working days between updates · Previous update: ${esc(p.name)}</p></div>
+      <div class="actions"><button class="btn sm" data-act="upload-prev">${ICON.upload}Load a different update</button><button class="btn sm" data-act="dl-cmp">${ICON.dl}Comparison CSV</button></div>
+    </section>
+    <section class="kpis">
+      <div class="kpi"><span class="eyebrow">Forecast finish</span><span class="v num ${c.finishDelta > 0 ? "tone-bad" : c.finishDelta < 0 ? "tone-good" : ""}">${c.finishDelta > 0 ? "+" : ""}${c.finishDelta}d</span><span class="d">${E.fmt(c.prevFinish, "short")} → ${E.fmt(c.curFinish, "short")}</span></div>
+      ${S.ev.BAC ? `<div class="kpi"><span class="eyebrow">Earned this period</span><span class="v num">${money(evGain)}</span><span class="d">SPI ${p.ev.SPI.toFixed(2)} → ${S.ev.SPI.toFixed(2)}</span></div>` : ""}
+      <div class="kpi"><span class="eyebrow">Progress</span><span class="v num">${c.finished.length} · ${c.started.length}</span><span class="d">Finished · started this period</span></div>
+      <div class="kpi"><span class="eyebrow">Logic changes</span><span class="v num ${logicN ? "tone-warn" : ""}">${logicN}</span><span class="d">${c.relAdded.length} added · ${c.relDeleted.length} deleted · ${c.relChanged.length} changed</span></div>
+      <div class="kpi"><span class="eyebrow">Duration and constraint edits</span><span class="v num ${c.durChanges.length + c.cstrChanges.length ? "tone-warn" : ""}">${c.durChanges.length + c.cstrChanges.length}</span><span class="d">${c.durChanges.length} duration · ${c.cstrChanges.length} constraint</span></div>
+    </section>
+    <div class="grid g-main">
+      <section class="panel"><div class="panel-h"><h2>What a reviewer should know</h2><span class="muted" style="font-size:.85rem">Found by comparing the two files</span></div>
+        <div class="alerts">${c.findings.map(a => `<div class="alert"><span class="sev ${a.sev}"></span><div><b>${esc(a.title)}</b><p>${esc(a.body)}</p></div><span></span></div>`).join("")}</div></section>
+      <section class="panel"><h2 style="margin-bottom:10px">Progress this period</h2>
+        <h3 style="margin:6px 0 4px">Finished</h3>${chips(c.finished)}
+        <h3 style="margin:14px 0 4px">Started</h3>${chips(c.started)}
+        <h3 style="margin:14px 0 4px">Moved onto the driving path</h3>${chips(c.drvIn)}
+        <h3 style="margin:14px 0 4px">Left the driving path</h3>${chips(c.drvOut)}
+      </section>
+    </div>
+    <section class="panel"><div class="panel-h"><h2>Logic, duration and constraint changes</h2><span class="muted" style="font-size:.85rem">Effect shows how the finish would move if the edit were reversed</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Change</th><th>Activity</th><th>Before</th><th>After</th><th>Effect on finish</th></tr></thead><tbody>
+      ${changes.map(x => `<tr class="${x.i != null ? "click" : ""}" ${x.i != null ? `data-act-open="${x.i}"` : ""}><td><span class="chip ${/deleted|Original|Constraint/.test(x.type) ? "warn" : "neutral"}">${x.type}</span></td><td><span class="mono">${esc(x.code)}</span> ${esc(x.name)}</td><td>${esc(x.before)}</td><td>${esc(x.after)}</td><td>${x.fx}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">No logic, duration or constraint edits between these updates.</td></tr>`}
+      </tbody></table></div></section>
+    <section class="panel"><div class="panel-h"><h2>Biggest movers</h2><span class="muted" style="font-size:.85rem">Open activities whose forecast finish changed most</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Activity</th><th class="r">Previous finish</th><th class="r">Current finish</th><th class="r">Change</th><th class="r">Float</th><th>Driving</th></tr></thead><tbody>
+      ${movers.map(r => `<tr class="click" data-act-open="${r.i}"><td><span class="mono">${esc(r.code)}</span> ${esc(r.name)}</td><td class="r">${E.fmt(r.pf, "short")}</td><td class="r">${E.fmt(r.cf, "short")}</td><td class="r ${r.delta > 0 ? "tone-bad" : "tone-good"}">${r.delta > 0 ? "+" : ""}${r.delta}d</td><td class="r">${r.ptf ?? ""} → <span class="${r.ctf < 0 ? "tone-bad" : ""}">${r.ctf ?? ""}</span></td><td>${r.cDrv ? `<span class="chip bad">${r.pDrv ? "Driving" : "New"}</span>` : r.pDrv ? `<span class="chip neutral">Left path</span>` : ""}</td></tr>`).join("") || `<tr><td colspan="6" class="muted">No open activity changed its forecast finish.</td></tr>`}
+      </tbody></table></div></section>`;
+}
+
+/* ---- recovery optimizer ---- */
+function computeRecovery() {
+  const f = S.d.finIdx != null ? S.m.acts[S.d.finIdx] : null;
+  S.rec = E.recovery(S.m, S.s, { target: f && f.cstrDate != null ? f.i : null });
+  S.recSel = new Set(S.rec.plan.map(o => o.id));
+}
+function recoveryResult(sel) {
+  const m = S.m, s = S.s, r = S.rec, T = r.target;
+  const s2 = sel.length ? E.applyPlan(m, sel) : s;
+  const f0 = T != null ? E.finishDate(m, s, T) : E.projectFinishDate(m, s);
+  const f1 = T != null ? E.finishDate(m, s2, T) : E.projectFinishDate(m, s2);
+  const tgt = T != null ? m.acts[T] : null;
+  return { f0, f1, gained: E.idx(f0) - E.idx(f1), cost: sel.reduce((a, o) => a + o.cost, 0), tgt, late0: tgt ? E.idx(f0) - E.idx(tgt.cstrDate) : null, late1: tgt ? E.idx(f1) - E.idx(tgt.cstrDate) : null, proj1: E.projectFinishDate(m, s2) };
+}
+function vRecover() {
+  const r = S.rec, m = S.m;
+  const sel = r.options.filter(o => S.recSel.has(o.id)), x = recoveryResult(sel);
+  const head = x.tgt ? `Target: <b>${esc(x.tgt.name)}</b> by ${E.fmt(x.tgt.cstrDate)}. Current forecast ${E.fmt(x.f0)}${x.late0 > 0 ? `, <span class="tone-bad">${x.late0} working days late</span>` : `, ${-x.late0} working days to spare`}.` : `These options pull the project finish (${E.fmt(x.f0)}) earlier.`;
+  const status = x.tgt ? (x.late1 <= 0 ? `<span class="chip good">${ICON.ok}Meets target</span>` : `<span class="chip bad">${ICON.x}${x.late1}d late</span>`) : "";
+  return `<section class="panel cmp-head">
+      <div style="min-width:0"><div class="eyebrow">Recovery optimizer</div><h2>Recovery plan</h2><p style="margin:4px 0 0;color:var(--ink-2)">${head}</p></div>
+      <div class="actions"><button class="btn sm" data-act="rec-best">Use recommended plan</button><button class="btn sm ghost" data-act="rec-clear">Clear</button><button class="btn sm" data-act="dl-rec">${ICON.dl}Plan CSV</button></div>
+    </section>
+    <section class="kpis">
+      <div class="kpi"><span class="eyebrow">${x.tgt ? esc(x.tgt.name) + " with plan" : "Finish with plan"}</span><span class="v num">${E.fmt(x.f1)}</span><span class="d">${status || "Project finish"}</span></div>
+      <div class="kpi"><span class="eyebrow">Days recovered</span><span class="v num ${x.gained > 0 ? "tone-good" : ""}">${x.gained}</span><span class="d">Working days</span></div>
+      <div class="kpi"><span class="eyebrow">Added cost</span><span class="v num">${money(x.cost)}</span><span class="d">${sel.length} action${sel.length === 1 ? "" : "s"} selected</span></div>
+      <div class="kpi"><span class="eyebrow">Project finish</span><span class="v num">${E.fmt(x.proj1, "short")}</span><span class="d">Was ${E.fmt(E.projectFinishDate(m, S.s), "short")}</span></div>
+    </section>
+    <section class="panel"><div class="panel-h"><h2>Recovery options on the driving path</h2><span class="muted" style="font-size:.85rem">Tick options to build your plan. Days are what each option recovers on its own.</span></div>
+      ${r.options.length ? `<div class="tbl-wrap"><table><thead><tr><th></th><th>Action</th><th>Type</th><th class="r">Days alone</th><th class="r">Est. cost</th><th>Risk to manage</th></tr></thead><tbody>
+      ${r.options.map(o => `<tr class="${S.recSel.has(o.id) ? "sel" : ""}"><td><input type="checkbox" id="rec-${esc(o.id)}" data-rec="${esc(o.id)}" ${S.recSel.has(o.id) ? "checked" : ""} aria-label="Include in plan"></td>
+        <td><label for="rec-${esc(o.id)}" style="cursor:pointer"><b style="font-weight:600">${esc(o.title)}</b>${o.recommended ? ` <span class="chip good">Recommended</span>` : ""}<div class="muted" style="font-size:.84rem">${esc(o.detail)}</div></label></td>
+        <td><span class="chip ${o.kind === "Crash" ? "warn" : "neutral"}">${o.kind}</span></td><td class="r tone-good">${o.days}d</td><td class="r">${o.cost ? money(o.cost) : "$0"}</td><td style="font-size:.84rem;color:var(--ink-2);min-width:200px">${esc(o.risk)}</td></tr>`).join("")}
+      </tbody></table></div>` : `<p class="muted">No recovery options found. The driving path has no remaining activities long enough to compress or overlap.</p>`}
+      <p class="muted" style="font-size:.8rem;margin:12px 0 0">Assumptions: crashing cuts remaining duration by 25% at a premium of 15% of the activity's remaining cost. Fast tracking starts the successor when half of the predecessor's remaining work is done. The recommended plan is the lowest cost set that meets the target, found by rescheduling the network for every combination tried.</p>
+    </section>`;
+}
+
+/* ---- owner report ---- */
+function staticCurve() {
+  const pts = S.ev.series.points, W = 760, H = 260, P = { l: 58, r: 14, t: 14, b: 28 };
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t, maxV = Math.max(...pts.map(p => Math.max(p.pv, p.ev || 0, p.ac || 0, p.fc || 0))) * 1.05;
+  const X = t => P.l + (t - t0) / (t1 - t0) * (W - P.l - P.r), Y = v => H - P.b - v / maxV * (H - P.t - P.b);
+  const step = maxV > 4e7 ? 1e7 : maxV > 2e7 ? 5e6 : maxV > 4e6 ? 1e6 : 2.5e5;
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="font:11px Arial,sans-serif">`;
+  for (let v = 0; v <= maxV; v += step) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E2E6EC"/><text x="${P.l - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#6B768C">${money(v).replace(".00M", "M")}</text>`;
+  const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const d0 = new Date(t0); let mt = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + 1, 1), k = 0;
+  while (mt < t1) { const d = new Date(mt); if (k++ % 2 === 0) g += `<text x="${X(mt)}" y="${H - 8}" text-anchor="middle" fill="#6B768C">${MON[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}</text>`; mt = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1); }
+  const line = (key, col, dash) => { const p = pts.filter(q => q[key] != null); return p.length ? `<path d="${p.map((q, i) => (i ? "L" : "M") + X(q.t).toFixed(1) + " " + Y(q[key]).toFixed(1)).join("")}" fill="none" stroke="${col}" stroke-width="2" ${dash ? 'stroke-dasharray="5 4"' : ""}/>` : ""; };
+  g += line("pv", "#2F6BD8") + line("fc", "#6B768C", true) + line("ac", "#E8641E") + line("ev", "#0E9384");
+  const xd = X(S.m.dataDate);
+  g += `<line x1="${xd}" x2="${xd}" y1="${P.t}" y2="${H - P.b}" stroke="#E8641E" stroke-dasharray="2 3"/><text x="${xd + 5}" y="${P.t + 10}" fill="#E8641E" font-weight="bold">Data date</text></svg>`;
+  return g + `<div class="lg"><span><i style="background:#2F6BD8"></i>Planned value</span><span><i style="background:#0E9384"></i>Earned value</span><span><i style="background:#E8641E"></i>Actual cost</span><span><i style="background:#6B768C"></i>Forecast</span></div>`;
+}
+function ownerReport() {
+  const m = S.m, s = S.s, ev = S.ev, d = S.d, f = facts(), logo = ($(".brand .logo") || {}).src || "";
+  const narr = S.narrative && !/^_Drafting/.test(S.narrative) ? S.narrative : ruleNarrative();
+  const sevC = { bad: "#C2272D", warn: "#9A6200", good: "#0F7B4F" };
+  const kpi = (l, v, sub, c) => `<div class="k"><div class="l">${l}</div><div class="v" style="color:${c || "#121A26"}">${v}</div><div class="s">${sub}</div></div>`;
+  const plan = S.rec.options.filter(o => S.recSel.has(o.id)), rx = recoveryResult(plan);
+  const sec = (t, body) => `<section><h2>${t}</h2>${body}</section>`;
+  const tbl = (head, rows) => `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  let body = `<div class="kp">
+    ${kpi("Forecast finish", E.fmt(f.fin), f.slip > 0 ? f.slip + " working days behind baseline" : "On baseline", f.slip > 0 ? "#C2272D" : "")}
+    ${kpi("P80 finish", E.fmt(f.p80), "Risk adjusted, P50 " + E.fmt(f.p50, "short"))}
+    ${kpi("Schedule health", d.passed + " of 14", "DCMA checks passing", d.passed < 10 ? "#C2272D" : "")}
+    ${ev.BAC ? kpi("SPI · CPI", ev.SPI.toFixed(2) + " · " + ev.CPI.toFixed(2), "Earned " + pct1(100 * ev.EV / ev.BAC) + " of " + money(ev.BAC)) + kpi("Estimate at completion", money(ev.EAC_cpi), ev.VAC < 0 ? money(-ev.VAC) + " over budget" : money(ev.VAC) + " under budget", ev.VAC < 0 ? "#C2272D" : "") : ""}
+  </div>`;
+  body += sec("Needs attention", `<ul class="al">${alerts().map(a => `<li style="border-color:${sevC[a.sev]}"><b>${esc(a.title)}</b><br>${esc(a.body)}</li>`).join("")}</ul>`);
+  if (ev.BAC) body += sec("Cumulative cost curve", staticCurve());
+  body += sec("Status narrative", `<div class="doc">${md(narr)}</div>`);
+  body += sec("Driving path to finish", tbl(["Activity", "Start", "Finish", "Float"], f.drivers.slice(0, 12).map(i => `<tr><td><b>${esc(m.acts[i].code)}</b> ${esc(m.acts[i].name)}</td><td>${E.fmt(E.startDate(m, s, i))}</td><td>${E.fmt(E.finishDate(m, s, i))}</td><td style="color:${s.TF[i] < 0 ? "#C2272D" : "inherit"}">${s.TF[i]}d</td></tr>`)));
+  if (plan.length) body += sec("Recovery plan", `<p>${plan.length} actions recover <b>${rx.gained} working days</b> for an estimated <b>${money(rx.cost)}</b>${rx.tgt ? `, moving ${esc(rx.tgt.name.toLowerCase())} to ${E.fmt(rx.f1)} against a target of ${E.fmt(rx.tgt.cstrDate)}` : ""}.</p>` + tbl(["Action", "Type", "Days", "Cost"], plan.map(o => `<tr><td>${esc(o.title)}<br><span class="mu">${esc(o.detail)}</span></td><td>${o.kind}</td><td>${o.days}d</td><td>${o.cost ? money(o.cost) : "$0"}</td></tr>`)));
+  body += sec("Schedule health (DCMA 14 point)", tbl(["Check", "Result", "Value", "Target"], d.checks.map(c => `<tr><td>${c.id}. ${esc(c.name)}</td><td style="color:${c.pass ? "#0F7B4F" : "#C2272D"};font-weight:bold">${c.pass ? "Pass" : "Fail"}</td><td>${typeof c.value === "string" ? c.value : c.unit === "%" ? pct1(c.value) : c.value.toFixed(2)}</td><td>${esc(c.threshold)}</td></tr>`)));
+  body += sec("Risk outlook", `<p>Across ${S.mc.N.toLocaleString()} Monte Carlo runs the P50 finish is <b>${E.fmt(f.p50)}</b> and the P80 is <b>${E.fmt(f.p80)}</b>.${f.pOnTime != null ? ` The chance of meeting ${esc(f.fm.name.toLowerCase())} is <b>${Math.round(f.pOnTime * 100)}%</b>.` : ""}</p>` + (S.risks.filter(r => r.on).length ? tbl(["Risk event", "Activity", "Probability", "Delay"], S.risks.filter(r => r.on).map(r => `<tr><td>${esc(r.name)}</td><td>${esc(m.acts[r.act].code)}</td><td>${Math.round(r.prob * 100)}%</td><td>${r.days}d</td></tr>`)) : ""));
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.title)} Project Controls Report ${E.fmt(m.dataDate, "iso")}</title>
+<style>body{margin:0;background:#EEF1F5;font:14px/1.5 Arial,Helvetica,sans-serif;color:#121A26}.page{max-width:880px;margin:24px auto;background:#fff;padding:40px 48px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+header{display:flex;justify-content:space-between;align-items:center;gap:20px}header img{height:42px}header .r{text-align:right;font-size:12px;color:#44506A}header .r b{display:block;font-size:13px;color:#121A26}
+.rule{height:3px;background:#E8641E;margin:16px 0 22px}h1{font-size:26px;margin:0 0 4px}.sub{color:#44506A;margin:0 0 20px}h2{font-size:17px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid #E2E6EC}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid #E2E6EC;border-radius:6px;overflow:hidden}.k{padding:12px 14px;border-right:1px solid #E2E6EC}.k:last-child{border-right:0}
+.k .l{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#6B768C;font-weight:bold}.k .v{font-size:20px;font-weight:bold;margin:2px 0}.k .s{font-size:11px;color:#44506A}
+.al{list-style:none;padding:0;margin:0}.al li{border-left:4px solid;padding:6px 0 6px 12px;margin:0 0 8px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:12.5px}th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6B768C;border-bottom:1px solid #C3CAD5;padding:6px 8px}td{border-bottom:1px solid #E9ECF1;padding:6px 8px;vertical-align:top}
+.mu{color:#6B768C;font-size:11.5px}.doc h4{font-size:14px;margin:14px 0 4px}.doc p{margin:6px 0}.lg{display:flex;gap:16px;font-size:11px;color:#44506A;margin-top:6px}.lg i{display:inline-block;width:14px;height:6px;margin-right:5px;vertical-align:middle}
+footer{margin-top:34px;padding-top:10px;border-top:1px solid #E2E6EC;font-size:11px;color:#6B768C;display:flex;justify-content:space-between}.bar{max-width:880px;margin:16px auto 0;text-align:right}.bar button{font:inherit;background:#E8641E;color:#fff;border:0;border-radius:6px;padding:9px 16px;cursor:pointer}
+section{break-inside:avoid}@media print{body{background:#fff}.page{box-shadow:none;margin:0;padding:0;max-width:none}.bar{display:none}@page{margin:16mm}}</style></head>
+<body><div class="bar"><button onclick="window.print()">Print or save as PDF</button></div><div class="page">
+<header>${logo ? `<img src="${logo}" alt="Echolink Solutions">` : "<b>Echolink Solutions</b>"}<div class="r"><b>Monthly Project Controls Report</b>Data date ${E.fmt(m.dataDate)}</div></header><div class="rule"></div>
+<h1>${esc(m.title)}</h1><p class="sub">${m.acts.length} activities · ${f.done} complete · ${f.active} in progress · Baseline finish ${E.fmt(f.blFin)}</p>
+${body}
+<footer><span>Prepared with Echolink ControlPoint</span><span>info@echolinksolutions.com</span></footer></div></body></html>`;
+}
+
+/* ---- request a demo ---- */
+const DEMO_ENDPOINT = (window.CONTROLPOINT_CONFIG && window.CONTROLPOINT_CONFIG.demoEndpoint) || "";
+function demoSection() {
+  return `<section class="panel demo" id="demo">
+    <div class="demo-grid">
+      <div>
+        <div class="eyebrow" style="color:var(--accent)">Request a demo</div>
+        <h2 style="font-size:1.6rem;margin:6px 0 10px">See ControlPoint on your own schedule</h2>
+        <p style="color:var(--ink-2);margin:0 0 14px;max-width:52ch">Echolink Solutions will walk your team through ControlPoint using one of your P6 exports, then scope a version built around your projects, reporting formats and systems.</p>
+        <ul class="ticks"><li>Live walkthrough on your own schedule</li><li>Owner reports in your client's format</li><li>Connection to your ERP, cost and document control systems</li><li>Private deployment for your organization</li></ul>
+      </div>
+      <form id="demo-form" novalidate>
+        <div class="fields">
+          <label for="dm-name">Full name<input id="dm-name" name="name" type="text" autocomplete="name" required></label>
+          <label for="dm-email">Work email<input id="dm-email" name="email" type="email" autocomplete="email" required></label>
+          <label for="dm-company">Company<input id="dm-company" name="company" type="text" autocomplete="organization" required></label>
+          <label for="dm-role">Role<select id="dm-role" name="role"><option>Project manager</option><option>Planner or scheduler</option><option>Project controls analyst</option><option>PMO leader</option><option>Owner's representative</option><option>Executive</option><option>Other</option></select></label>
+          <label for="dm-size">Projects you manage<select id="dm-size" name="size"><option>1 to 5</option><option>6 to 20</option><option>21 to 100</option><option>More than 100</option></select></label>
+          <label for="dm-sector">Sector<select id="dm-sector" name="sector"><option>Construction</option><option>Federal or defense</option><option>Healthcare</option><option>Energy or oil and gas</option><option>Data centers</option><option>Manufacturing</option><option>Other</option></select></label>
+          <label for="dm-msg" class="full">What would you like to see?<textarea id="dm-msg" name="message" rows="3" placeholder="For example: monthly owner reports, update reviews, EVMS compliance"></textarea></label>
+        </div>
+        <div class="actions" style="margin-top:12px"><button class="btn primary" type="submit" id="dm-send">Request a demo</button></div>
+        <p id="dm-status" class="dm-status" role="status"></p>
+      </form>
+    </div>
+  </section>`;
+}
+async function submitDemo(form) {
+  const st = $("#dm-status"), v = Object.fromEntries(new FormData(form).entries());
+  if (!v.name.trim() || !v.company.trim() || !/^\S+@\S+\.\S+$/.test(v.email)) { st.className = "dm-status tone-bad"; st.textContent = "Enter your name, company and a valid work email."; return; }
+  if (DEMO_ENDPOINT) {
+    $("#dm-send").disabled = true; st.className = "dm-status"; st.textContent = "Sending…";
+    try {
+      const r = await fetch(DEMO_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(Object.assign({ source: "ControlPoint" }, v)) });
+      if (!r.ok) throw new Error();
+      form.reset(); st.className = "dm-status tone-good"; st.textContent = "Thank you. Echolink Solutions will contact you within one business day.";
+    } catch (e) { st.className = "dm-status tone-bad"; st.innerHTML = `The request did not go through. Email us at <span class="sel">info@echolinksolutions.com</span>.`; }
+    $("#dm-send").disabled = false; return;
+  }
+  const bodyTxt = `Name: ${v.name}\nCompany: ${v.company}\nEmail: ${v.email}\nRole: ${v.role}\nProjects managed: ${v.size}\nSector: ${v.sector}\n\n${v.message || ""}`;
+  location.href = "mailto:info@echolinksolutions.com?subject=" + encodeURIComponent("ControlPoint demo request: " + v.company) + "&body=" + encodeURIComponent(bodyTxt);
+  st.className = "dm-status"; st.innerHTML = `Your email app should open with the request ready to send. If it does not, email <span class="sel">info@echolinksolutions.com</span>.`;
 }
 
 /* ---- schedule ---- */
@@ -741,7 +1019,7 @@ function vData() {
     </section>
     <section class="panel"><h2 style="margin-bottom:10px">Exports</h2>
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${[["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}">${ICON.dl}Save</button></div>`).join("")}
+        ${[["report", "Owner report (.html)", "Branded monthly report. Open it and choose Print or save as PDF"], ["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-prev", "Sample previous update (.xer)", "The 7 Sep 2026 update, for trying the comparison"], ["dl-cmp", "Update comparison (.csv)", "Every change between the two loaded updates"], ["dl-rec", "Recovery plan (.csv)", "Recovery options and the selected plan"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}">${ICON.dl}Save</button></div>`).join("")}
       </div>
       ${m.loops ? `<p class="tone-bad">Circular logic found: ${esc(m.loops.join(", "))}. Results for these activities are unreliable.</p>` : ""}
     </section></div>`;
@@ -850,7 +1128,9 @@ function contextPack() {
       byWbs: ev.byWbs.filter(w => w.BAC).map(w => ({ wbs: (m.wbs[w.id] || {}).name, BAC: Math.round(w.BAC), CPI: w.CPI && +w.CPI.toFixed(2), SPI: w.SPI && +w.SPI.toFixed(2) })) } : "no cost data",
     dcma: d.checks.map(c => ({ check: c.id + " " + c.name, result: c.pass ? "pass" : "fail", value: typeof c.value === "number" ? +c.value.toFixed(2) : c.value, threshold: c.threshold, activities: [...new Set(c.items)].slice(0, 25).map(i => m.acts[i].code).join(","), note: c.note || undefined })),
     activities: m.acts.filter(a => a.status !== "C").map(act),
-    completedLate: m.acts.filter(a => a.status === "C" && a.blFinish && a.actFinish > a.blFinish).map(a => a.code + " finished " + (E.idx(a.actFinish) - E.idx(a.blFinish)) + "d late").join("; ")
+    completedLate: m.acts.filter(a => a.status === "C" && a.blFinish && a.actFinish > a.blFinish).map(a => a.code + " finished " + (E.idx(a.actFinish) - E.idx(a.blFinish)) + "d late").join("; "),
+    sinceLastUpdate: S.cmp ? { previousDataDate: E.fmt(S.cmp.prevDate, "iso"), finishChangeWorkingDays: S.cmp.finishDelta, findings: S.cmp.findings.map(x => x.title + ". " + x.body) } : "no previous update loaded",
+    recoveryOptions: S.rec.options.map(o => ({ action: o.title, type: o.kind, daysAlone: o.days, cost: o.cost, inRecommendedPlan: !!o.recommended }))
   };
 }
 const RULES = `You are a senior project controls analyst (planning, scheduling, earned value, DCMA and EVMS) supporting a project team. You are given computed results for one Primavera P6 schedule as JSON. Rules:
@@ -907,7 +1187,9 @@ function ruleNarrative() {
   t += `\n\n### Schedule quality (DCMA)\nThe schedule passes ${d.passed} of 14 checks. Failing checks: ${fails.map(c => c.name).join(", ") || "none"}.`;
   if (s.overrides.length) t += ` ${s.overrides.map(o => `${m.acts[o.i].code} carries a mandatory constraint that forces it ${o.logic - o.forced} days ahead of its logic`).join("; ")}.`;
   t += `\n\n### Risk outlook\nAcross ${S.mc.N.toLocaleString()} simulation runs the P50 finish is ${E.fmt(f.p50)} and the P80 is ${E.fmt(f.p80)}.${f.pOnTime != null ? ` The chance of meeting ${f.fm.name.toLowerCase()} is ${Math.round(f.pOnTime * 100)}%.` : ""}`;
-  t += `\n\n### Recommended actions\n- Develop a recovery plan for the driving path, starting with ${drv[0] || "the first driving activity"}.\n- Correct the ${fails.length} failing schedule quality checks before the next submission${s.overrides.length ? ", beginning with the mandatory constraint" : ""}.\n${ev.CPI < 1 && ev.BAC ? "- Review cost performance in the WBS areas running below 0.95 CPI.\n" : ""}- Commit externally to the P80 date until recovery actions show results.`;
+  if (S.cmp) t += `\n\n### Since the last update\n${S.cmp.findings.slice(0, 4).map(x => "- " + x.title + ". " + x.body).join("\n")}`;
+  const rp = S.rec && S.rec.plan.length ? recoveryResult(S.rec.plan) : null;
+  t += `\n\n### Recommended actions\n${rp ? `- Adopt the recovery plan: ${S.rec.plan.length} actions recover ${rp.gained} working days for about ${money(rp.cost)}${rp.tgt && rp.late1 <= 0 ? `, bringing ${rp.tgt.name.toLowerCase()} back inside its target` : ""}.` : `- Develop a recovery plan for the driving path, starting with ${drv[0] || "the first driving activity"}.`}\n- Correct the ${fails.length} failing schedule quality checks before the next submission${s.overrides.length ? ", beginning with the mandatory constraint" : ""}.\n${ev.CPI < 1 && ev.BAC ? "- Review cost performance in the WBS areas running below 0.95 CPI.\n" : ""}- Commit externally to the P80 date until recovery actions show results.`;
   return t;
 }
 function md(src) {
@@ -930,7 +1212,7 @@ async function save(filename, data) {
     try { await S.caps.downloads.save({ filename, data }); } catch (e) { if (e && e.code !== "cancelled" && e.code !== "declined") toast("The file was not saved."); }
     return;
   }
-  const type = /\.csv$/.test(filename) ? "text/csv" : /\.md$/.test(filename) ? "text/markdown" : "application/octet-stream";
+  const type = /\.csv$/.test(filename) ? "text/csv" : /\.md$/.test(filename) ? "text/markdown" : /\.html$/.test(filename) ? "text/html" : "application/octet-stream";
   const url = URL.createObjectURL(new Blob([data], { type: type + ";charset=utf-8" }));
   const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -949,6 +1231,22 @@ function exportEvm() {
   return csv([["Metric", "Value"], ["Data date", E.fmt(m.dataDate, "iso")], ["BAC", ev.BAC], ["PV", ev.PV.toFixed(0)], ["EV", ev.EV.toFixed(0)], ["AC", ev.AC], ["SV", ev.SV.toFixed(0)], ["CV", ev.CV.toFixed(0)], ["SPI", ev.SPI.toFixed(3)], ["CPI", ev.CPI.toFixed(3)], ["SPI(t)", ev.SPIt.toFixed(3)], ["TCPI", ev.TCPI.toFixed(3)], ["EAC (CPI)", ev.EAC_cpi.toFixed(0)], ["EAC (CPI x SPI)", ev.EAC_cpispi.toFixed(0)], ["EAC (bottom up)", ev.EAC_bu.toFixed(0)], ["VAC", ev.VAC.toFixed(0)], [], ["WBS", "BAC", "PV", "EV", "AC", "CPI", "SPI"]]
     .concat(ev.byWbs.map(w => [(m.wbs[w.id] || {}).name, w.BAC, w.PV.toFixed(0), w.EV.toFixed(0), w.AC, w.CPI ? w.CPI.toFixed(3) : "", w.SPI ? w.SPI.toFixed(3) : ""])));
 }
+function exportCompare() {
+  const c = S.cmp, m = S.m; if (!c) return "";
+  const rows = [["Section", "Item", "Activity", "Before", "After", "Detail"]];
+  c.findings.forEach(x => rows.push(["Finding", x.title, "", "", "", x.body]));
+  c.durChanges.forEach(x => rows.push(["Original duration", x.code, x.name, x.from, x.to, ""]));
+  c.remIncreases.forEach(x => rows.push(["Remaining duration", x.code, x.name, x.expected, x.actual, "Expected vs reported"]));
+  c.cstrChanges.forEach(x => rows.push(["Constraint", x.code, x.name, x.from, x.to, ""]));
+  c.relDeleted.forEach(x => rows.push(["Logic deleted", x.predCode + " to " + x.succCode, "", x.type, "Removed", ""]));
+  c.relAdded.forEach(x => rows.push(["Logic added", m.acts[x.pred].code + " to " + m.acts[x.succ].code, "", "None", x.type, ""]));
+  c.relChanged.forEach(x => rows.push(["Logic changed", m.acts[x.pred].code + " to " + m.acts[x.succ].code, "", x.from, x.to, ""]));
+  c.rows.filter(r => r.delta !== 0).forEach(r => rows.push(["Finish movement", r.code, r.name, E.fmt(r.pf, "iso"), E.fmt(r.cf, "iso"), r.delta + " working days"]));
+  return csv(rows);
+}
+function exportRecovery() {
+  return csv([["Selected", "Recommended", "Type", "Action", "Detail", "Days alone", "Estimated cost", "Risk"]].concat(S.rec.options.map(o => [S.recSel.has(o.id) ? "Y" : "", o.recommended ? "Y" : "", o.kind, o.title, o.detail, o.days, o.cost, o.risk])));
+}
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200); }
 
 /* ---------------- events ---------------- */
@@ -965,6 +1263,8 @@ function afterRender() {
     const r = S.risks[+el.dataset.risk], f = el.dataset.f;
     r[f] = f === "on" ? el.checked : f === "prob" ? Math.max(0, Math.min(100, +el.value)) / 100 : f === "days" || f === "act" ? +el.value : el.value;
   }));
+  document.querySelectorAll("[data-rec]").forEach(el => el.addEventListener("change", () => { if (el.checked) S.recSel.add(el.dataset.rec); else S.recSel.delete(el.dataset.rec); render(); }));
+  const dm = $("#demo-form"); if (dm) dm.addEventListener("submit", e => { e.preventDefault(); submitDemo(dm); });
   const sw = $("#skip-welcome"); if (sw) sw.addEventListener("change", () => { try { localStorage.setItem("cp.skipWelcome", sw.checked ? "1" : "0"); } catch (e) {} });
   const drop = $("#drop");
   if (drop) {
@@ -979,6 +1279,12 @@ function readFile(file) {
   r.readAsText(file);
 }
 $("#file").addEventListener("change", e => { const f = e.target.files[0]; if (f) readFile(f); e.target.value = ""; });
+$("#file-prev").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { loadPrev(String(r.result), f.name); S.view = "compare"; render(); toast(`Compared with ${f.name}`); } catch (err) { toast(err.message || "This file could not be read as a P6 XER export."); } };
+  r.readAsText(f);
+});
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-view],[data-go],[data-act],[data-act-open],[data-filter-set],[data-ask],[data-ai-check],[data-ai-act],[data-whatif],[data-del-risk]");
   if (!t) { if (e.target.closest(".drawer") == null && $("#drawer-host").innerHTML && !e.target.closest("[data-act-open]")) $("#drawer-host").innerHTML = ""; return; }
@@ -1005,6 +1311,15 @@ document.addEventListener("click", e => {
   else if (act === "run-mc") { S.mcOpts = { iterations: +$("#mc-n").value, low: +$("#mc-low").value || 0.9, likely: +$("#mc-likely").value || 1, high: +$("#mc-high").value || 1.3 }; S.mc = E.monteCarlo(S.m, Object.assign({}, S.mcOpts, { risks: S.risks, seed: Date.now() })); render(); toast(`Ran ${S.mcOpts.iterations.toLocaleString()} simulations`); }
   else if (act === "add-risk") { const a = S.m.acts.find(x => x.status !== "C" && !x.mile); S.risks.push({ name: "New risk event", act: a ? a.i : 0, prob: 0.3, days: 5, on: true }); render(); }
   else if (act === "dl-xer") save("Northgate_Distribution_Center_NDC-2026.xer", SAMPLE_XER);
+  else if (act === "dl-prev") save("Northgate_Distribution_Center_NDC-2026_2026-09-07.xer", SAMPLE_PREV_XER);
+  else if (act === "upload-prev") $("#file-prev").click();
+  else if (act === "sample-prev") { try { loadPrev(SAMPLE_PREV_XER, "Sample update of 7 Sep 2026"); render(); } catch (err) { toast(err.message); } }
+  else if (act === "dl-cmp") { if (!S.cmp) { toast("Load a previous update first."); return; } save(S.m.name + "_update_comparison.csv", exportCompare()); }
+  else if (act === "dl-rec") save(S.m.name + "_recovery_plan.csv", exportRecovery());
+  else if (act === "rec-best") { S.recSel = new Set(S.rec.plan.map(o => o.id)); render(); }
+  else if (act === "rec-clear") { S.recSel = new Set(); render(); }
+  else if (act === "report") save(S.m.name + "_Owner_Report_" + E.fmt(S.m.dataDate, "iso") + ".html", ownerReport());
+  else if (act === "demo") { S.view = "welcome"; $("#drawer-host").innerHTML = ""; render(); setTimeout(() => { const d = $("#demo"); if (d) { d.scrollIntoView({ block: "start" }); $("#dm-name")?.focus({ preventScroll: true }); } }, 30); }
   else if (act === "dl-acts") save(S.m.name + "_activities.csv", exportActs());
   else if (act === "dl-dcma") save(S.m.name + "_DCMA14.csv", exportDcma());
   else if (act === "dl-evm") save(S.m.name + "_EVM.csv", exportEvm());

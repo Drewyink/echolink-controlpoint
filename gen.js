@@ -2,7 +2,7 @@
 const E = require("./engine.js");
 const fs = require("fs");
 
-const START = "2026-03-02", DD = "2026-10-05";
+const START = "2026-03-02", DD = "2026-10-05", DD_PREV = "2026-09-07";
 const WBS = [
   ["1", "PM", "Project Management & Preconstruction"],
   ["2", "SITE", "Sitework"],
@@ -73,19 +73,33 @@ const A = [
   ["A9080", "Closeout and turnover documentation", "9", 20, ["M9070"], 95000, 1, 1],
   ["M9090", "Project complete", "9", 0, ["A9080"], 0, 1, 1, "TT_FinMile"],
 ];
-// Remaining-work re-estimates made at this update (forecast differs from baseline)
+// Remaining-work re-estimates made at each update (forecast differs from baseline)
 const REESTIMATE = { A7020: 46, A7040: 64 };
+const REESTIMATE_PREV = { A7020: 40, A7040: 60 };
+// The previous update differs from the current one in ways a reviewer should catch:
+// A5040 tied into A9050 (deleted this month, leaving an open end), A9030 was 30 days (cut to 25),
+// and A7040 had no constraint (a mandatory start was added this month).
+function prevList() {
+  return A.map(a => {
+    const b = a.slice(); b[4] = a[4].slice();
+    if (b[0] === "A9050") b[4].push("A5040");
+    if (b[0] === "A9030") b[3] = 30;
+    if (b[0] === "A7040") b[9] = "";
+    return b;
+  });
+}
 
 const RES = [["R1", "Labor", "RT_Labor"], ["R2", "Materials and equipment", "RT_Mat"], ["R3", "Subcontract", "RT_Equip"]];
 
-function tables(statusFn, dataDate, cstrDates) {
+function tables(statusFn, dataDate, cstrDates, L) {
+  L = L || A;
   const H = 8;
   const t = {};
   t.PROJECT = [{ proj_id: "1001", proj_short_name: "NDC-2026", last_recalc_date: dataDate + " 08:00", plan_start_date: START + " 08:00", plan_end_date: "", scd_end_date: "" }];
   t.CALENDAR = [{ clndr_id: "1", clndr_name: "Standard 5 day", day_hr_cnt: "8", week_hr_cnt: "40" }];
   t.PROJWBS = [{ wbs_id: "100", proj_id: "1001", parent_wbs_id: "", wbs_short_name: "NDC", wbs_name: "Northgate Distribution Center", seq_num: "0", proj_node_flag: "Y" }]
     .concat(WBS.map(([n, c, name], k) => ({ wbs_id: "10" + n, proj_id: "1001", parent_wbs_id: "100", wbs_short_name: c, wbs_name: name, seq_num: String(k + 1), proj_node_flag: "N" })));
-  t.TASK = A.map((a, k) => {
+  t.TASK = L.map((a, k) => {
     const st = statusFn(a, k);
     return Object.assign({
       task_id: String(5000 + k), proj_id: "1001", wbs_id: "10" + a[2], clndr_id: "1", task_code: a[0], task_name: a[1],
@@ -95,9 +109,9 @@ function tables(statusFn, dataDate, cstrDates) {
       target_start_date: "", target_end_date: "", total_float_hr_cnt: "", cstr_type: a[9] || "", cstr_date: (a[9] && cstrDates[a[0]]) || "", driving_path_flag: "N"
     }, st);
   });
-  const code2id = {}; A.forEach((a, k) => code2id[a[0]] = String(5000 + k));
+  const code2id = {}; L.forEach((a, k) => code2id[a[0]] = String(5000 + k));
   t.TASKPRED = [];
-  A.forEach((a, k) => a[4].forEach(p => {
+  L.forEach((a, k) => a[4].forEach(p => {
     const [pc, ty, lag] = p.split(":");
     t.TASKPRED.push({ task_pred_id: String(9000 + t.TASKPRED.length), task_id: String(5000 + k), pred_task_id: code2id[pc], proj_id: "1001", pred_proj_id: "1001", pred_type: "PR_" + (ty || "FS"), lag_hr_cnt: String((+lag || 0) * H) });
   }));
@@ -115,10 +129,12 @@ m.acts.forEach((a, i) => BL[a.code] = { s: E.startDate(m, s, i), f: E.finishDate
 const cstrDates = { A7040: ds(BL.A7040.s, "08:00"), M9070: ds(BL.M9070.f, "17:00") };
 console.log("Baseline finish", E.fmt(BL.M9090.f), "SC", E.fmt(BL.M9070.f), "ASRS start", E.fmt(BL.A7040.s));
 
+function makeUpdate(DDx, L, RE, file) {
 // 2) As-built simulation with actual durations, to find status at the data date
-t = tables((a) => ({ target_drtn_hr_cnt: String(Math.round(a[3] * a[6]) * 8), remain_drtn_hr_cnt: String(Math.round(a[3] * a[6]) * 8) }), START, {});
+let t, m, s;
+t = tables((a) => ({ target_drtn_hr_cnt: String(Math.round(a[3] * a[6]) * 8), remain_drtn_hr_cnt: String(Math.round(a[3] * a[6]) * 8) }), START, {}, L);
 m = E.buildModel(t); s = E.schedule(m);
-const ddT = E.parseDate(DD), Didx = E.idx(ddT);
+const ddT = E.parseDate(DDx), Didx = E.idx(ddT);
 const ST = {};
 m.acts.forEach((a, i) => {
   const ad = Math.round(A[i][3] * A[i][6]);
@@ -140,10 +156,10 @@ function progress(a, k) {
   const o = { target_start_date: ds(bl.s, "08:00"), target_end_date: ds(bl.f, "17:00") };
   if (st.status === "C") Object.assign(o, { status_code: "TK_Complete", phys_complete_pct: "100", remain_drtn_hr_cnt: "0", act_start_date: ds(st.as, "08:00"), act_end_date: ds(st.af, "17:00") });
   else if (st.status === "A") Object.assign(o, { status_code: "TK_Active", phys_complete_pct: String(st.pct), remain_drtn_hr_cnt: String(st.rem * H), act_start_date: ds(st.as, "08:00") });
-  else if (REESTIMATE[a[0]]) o.remain_drtn_hr_cnt = String(REESTIMATE[a[0]] * H);
+  else if (RE[a[0]]) o.remain_drtn_hr_cnt = String(RE[a[0]] * H);
   return o;
 }
-t = tables(progress, DD, cstrDates);
+t = tables(progress, DDx, cstrDates, L);
 m = E.buildModel(t); s = E.schedule(m);
 t.TASK.forEach((r, i) => {
   const a = m.acts[i];
@@ -158,6 +174,7 @@ t.TASK.forEach((r, i) => {
 t.TASKRSRC = [];
 A.forEach((a, k) => {
   if (!a[5]) return;
+  a = L[k];
   const st = ST[a[0]], pct = st.status === "C" ? 100 : st.status === "A" ? st.pct : 0;
   const rid = a[2] === "1" && a[0] !== "A1010" && a[0] !== "A1020" ? "R2" : ["A1010", "A1020", "A8010", "A8020", "A8030", "A8060", "A9080"].includes(a[0]) ? "R1" : "R3";
   const ac = Math.round(a[5] * pct / 100 * a[7]);
@@ -170,6 +187,9 @@ t.PROJECT[0].scd_end_date = ds(E.projectFinishDate(m, s), "17:00");
 t.PROJECT[0].plan_end_date = ds(BL.M9090.f, "17:00");
 
 const xer = E.writeXER(t, ["PROJECT", "CALENDAR", "PROJWBS", "RSRC", "TASK", "TASKPRED", "TASKRSRC"]);
-fs.writeFileSync(__dirname + "/northgate.xer", xer);
-console.log("Forecast finish", E.fmt(E.projectFinishDate(m, s)), "bytes", xer.length);
-m.acts.forEach((a, i) => { if (a.status !== "N") console.log(a.code, a.status, a.pct + "%", "rem", a.remDur); });
+fs.writeFileSync(__dirname + "/" + file, xer);
+console.log(file, "data date", DDx, "forecast finish", E.fmt(E.projectFinishDate(m, s)), "bytes", xer.length);
+}
+
+makeUpdate(DD, A, REESTIMATE, "northgate.xer");
+makeUpdate(DD_PREV, prevList(), REESTIMATE_PREV, "northgate_prev.xer");
