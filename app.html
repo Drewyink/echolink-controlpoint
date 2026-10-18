@@ -215,7 +215,8 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 .readout .row b { font: 600 1.25rem/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--hero-ink); }
 .readout .row b.bad { color: #FF8D90; } .readout .row b.warn { color: #F2C46B; }
 .readout svg { display: block; width: 100%; height: 54px; margin-top: 6px; }
-.feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 255px), 1fr)); gap: 14px; }
+.feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 205px), 1fr)); gap: 14px; }
+.feat button { padding: 16px; } .feat p { font-size: 0.86rem; }
 .feat button { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--panel-shadow); transition: border-color .15s, transform .15s; }
 .feat button:hover { border-color: var(--accent); transform: translateY(-1px); }
 .feat button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -233,6 +234,43 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 .who span { padding: 6px 12px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font-size: 0.86rem; color: var(--ink-2); }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 0.84rem; color: var(--ink-3); padding-top: 14px; border-top: 1px solid var(--line); }
 .foot .sel { user-select: all; color: var(--ink-2); }
+/* insights */
+.ins-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fchips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1; min-width: 0; }
+.fchip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--ink); font-size: 0.82rem; font-weight: 600; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+.fchip svg { width: 11px; height: 11px; } .fchip:focus-visible { outline: 2px solid var(--accent); }
+.ins-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ins-grid .wide { grid-column: 1 / -1; }
+@media (max-width: 900px) { .ins-grid { grid-template-columns: minmax(0, 1fr); } }
+.viz-h { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.hbars { display: flex; flex-direction: column; gap: 4px; }
+.hbar { all: unset; cursor: pointer; display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 6px; transition: opacity .15s, background .15s; }
+.hbar:hover { background: var(--sunk); } .hbar:focus-visible { outline: 2px solid var(--accent); }
+.hbar.on { background: var(--accent-soft); }
+.hbar.dim, .col.dim { opacity: 0.35; }
+.hb-l { font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hb-t { position: relative; height: 14px; }
+.hb-b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 3px 3px 0; min-width: 2px; }
+.hb-b2 { top: 3px; bottom: 3px; }
+.hb-v { font-size: 0.8rem; color: var(--ink-2); min-width: 64px; text-align: right; }
+.cols { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; height: 190px; align-items: end; overflow-x: auto; }
+.col { all: unset; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; min-width: 28px; transition: opacity .15s; }
+.col:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+.col-t { flex: 1; width: 70%; display: flex; align-items: flex-end; }
+.col-b { width: 100%; border-radius: 4px 4px 0 0; min-height: 2px; }
+.col.on .col-b { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+.col-v { font-size: 0.78rem; color: var(--ink-2); min-height: 1em; }
+.col-l { font-size: 0.72rem; color: var(--ink-3); white-space: nowrap; }
+.cm-svg { display: block; max-width: none; } .cm-svg text { font-size: 11px; fill: var(--ink-3); font-family: var(--f-body); }
+.itip { position: fixed; z-index: 50; pointer-events: none; background: var(--ink); color: var(--surface); padding: 7px 10px; border-radius: 6px; font-size: 0.8rem; line-height: 1.45; max-width: 260px; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+/* playback */
+.pb-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 12px; }
+.pb-top h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+#pb-slider { width: 100%; accent-color: var(--accent); }
+.pb-axis { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-3); }
+#pb-dyn { display: flex; flex-direction: column; gap: 16px; }
+.gantt .pbbar { transition: x .35s ease, width .35s ease, fill .35s; }
+@media (prefers-reduced-motion: reduce) { .gantt .pbbar { transition: none; } }
 /* comparison, recovery, demo */
 .cmp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px; }
 .demo { background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 160%); }
@@ -277,6 +315,7 @@ input[type=search], input[type=number], input[type=text], select, textarea { bac
 <input type="file" id="file-prev" accept=".xer,.txt" hidden>
 <div id="drawer-host"></div>
 <div class="toast" id="toast" hidden></div>
+<div class="itip" id="itip" hidden></div>
 
 <script>
 /*ENGINE*/
@@ -301,7 +340,7 @@ const ICON = {
 };
 
 /* ---------------- state ---------------- */
-const S = { view: "overview", source: "", tables: null, projects: [], projId: null, m: null, s: null, d: null, ev: null, mc: null,
+const S = { ins: { f: { wbs: null, status: null, bucket: null, month: null }, view: "exec" }, pb: null, insRows: null, view: "overview", source: "", tables: null, projects: [], projId: null, m: null, s: null, d: null, ev: null, mc: null,
   filter: "all", q: "", risks: [], mcOpts: { iterations: 1000, low: 0.9, likely: 1.0, high: 1.3 }, whatIf: { act: null, days: 10 },
   chat: [], busy: false, narrative: null, narrativeSource: "", caps: { sample: null, downloads: null } };
 S.view = "welcome";
@@ -324,7 +363,7 @@ async function aiCall(input, opts) {
   return { text };
 }
 const VIEWS = [
-  ["welcome", "Welcome"], ["overview", "Command center"], ["schedule", "Schedule"], ["compare", "Compare updates"], ["health", "Health check"],
+  ["welcome", "Welcome"], ["overview", "Command center"], ["insights", "Insights"], ["schedule", "Schedule"], ["playback", "Playback"], ["compare", "Compare updates"], ["health", "Health check"],
   ["cost", "Cost & EVM"], ["risk", "Risk & what if"], ["recover", "Recovery plan"], ["assistant", "AI analyst"], ["data", "Data & exports"]
 ];
 
@@ -345,6 +384,8 @@ function selectProject(id) {
   S.risks = S.source === "sample" ? defaultRisks(S.m) : [];
   S.chat = []; S.narrative = null; S.whatIf.act = null;
   S.prev = null; S.cmp = null;
+  if (S.pb && S.pb.timer) clearInterval(S.pb.timer);
+  S.pb = null; S.insRows = null; S.ins.f = { wbs: null, status: null, bucket: null, month: null };
   if (S.source === "sample") { try { S.prev = { m: E.buildModel(E.parseXER(SAMPLE_PREV_XER)), name: "Sample update of 7 Sep 2026" }; } catch (e) { S.prev = null; } }
   recompute();
 }
@@ -413,7 +454,7 @@ function render() {
   const fails = S.d ? S.d.checks.filter(c => !c.pass).length : 0;
   $("#nav").innerHTML = VIEWS.map(([k, l]) => [k, k === "assistant" && !aiOn() ? "Status narrative" : l]).map(([k, l]) => `<button data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "health" && S.d ? `<span class="cnt ${fails ? "bad" : ""}">${14 - fails}/14</span>` : ""}</button>`).join("");
   const R = $("#root");
-  R.innerHTML = (S.view === "welcome" ? "" : topbar()) + ({ welcome: vWelcome, overview: vOverview, schedule: vSchedule, compare: vCompare, health: vHealth, cost: vCost, risk: vRisk, recover: vRecover, assistant: vAssistant, data: vData }[S.view] || vOverview)();
+  R.innerHTML = (S.view === "welcome" ? "" : topbar()) + ({ welcome: vWelcome, overview: vOverview, insights: vInsights, playback: vPlayback, schedule: vSchedule, compare: vCompare, health: vHealth, cost: vCost, risk: vRisk, recover: vRecover, assistant: vAssistant, data: vData }[S.view] || vOverview)();
   R.classList.remove("fade"); void R.offsetWidth; R.classList.add("fade");
   afterRender();
 }
@@ -493,6 +534,8 @@ function vWelcome() {
     ["cpm", "Live critical path", "Recalculates every early date, late date and float value from your P6 logic, and traces the exact chain of work driving the finish.", "schedule", "Open schedule"],
     ["health", "DCMA 14 point health check", "Scores schedule quality against the standard used in federal reviews, names every offending activity, and explains how to fix it in P6.", "health", "Run health check"],
     ["evm", "Earned value and forecasting", "Calculates SPI, CPI, TCPI, earned schedule and three estimates at completion, with an S curve by WBS.", "cost", "See cost performance"],
+    ["evm", "Power BI style insights", "An interactive dashboard where clicking any bar filters every visual, with executive, scheduler and cost views and a one click export to Power BI.", "insights", "Open insights"],
+    ["cpm", "Week by week playback", "Replays the project from notice to proceed, rebuilding the schedule each week to show exactly when and where the finish date started to slide.", "playback", "Watch the replay"],
     ["diff", "Update comparison", "Compares this month's update with last month's and exposes every slip, deleted relationship, cut duration and new constraint, including how much of the finish movement is real.", "compare", "Compare updates"],
     ["rec", "Recovery optimizer", "Tests crashing and fast tracking options across the driving path and finds the lowest cost plan that brings the project back on target.", "recover", "Build a recovery plan"],
     ["risk", "Monte Carlo risk", "Simulates thousands of possible futures with your risk register to give P50 and P80 dates and the odds of meeting the target.", "risk", "Simulate risk"],
@@ -539,6 +582,281 @@ function vWelcome() {
     <span>Built by Echolink Solutions · The Verifiable Integration Layer · <span class="sel">info@echolinksolutions.com</span></span>
     <label style="display:inline-flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="skip-welcome" ${skip ? "checked" : ""}>Skip this introduction next time</label>
   </div>`;
+}
+
+/* ---- insights (Power BI style) ---- */
+const MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const monthKey = t => { const d = new Date(t); return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0"); };
+const monthLabel = k => { const [y, mo] = k.split("-"); return MONS[+mo - 1] + " " + y.slice(2); };
+const FLOAT_BUCKETS = [["neg", "Below 0"], ["zero", "0"], ["low", "1 to 10"], ["mid", "11 to 44"], ["high", "Over 44"]];
+const STATUS_NAMES = { C: "Complete", A: "In progress", N: "Not started" };
+function floatBucket(tf) { return tf == null ? null : tf < 0 ? "neg" : tf === 0 ? "zero" : tf <= 10 ? "low" : tf <= 44 ? "mid" : "high"; }
+function insightRows() {
+  if (S.insRows && S.insRows.m === S.m && S.insRows.s === S.s) return S.insRows.rows;
+  const m = S.m, s = S.s, t = m.dataDate + E.DAY - 1;
+  const rows = m.acts.map(a => {
+    const fin = E.finishDate(m, s, a.i), top = E.topWbs(m, a.wbsId);
+    return { i: a.i, code: a.code, name: a.name, a, wbs: top, wbsName: (m.wbs[top] || {}).name || "Other",
+      status: a.status, tf: s.TF[a.i], bucket: a.status === "C" ? null : floatBucket(s.TF[a.i]), fin, start: E.startDate(m, s, a.i),
+      month: a.status === "C" ? null : monthKey(fin), bac: a.bac, ac: a.ac, etc: a.etc, ev: a.bac * a.pct / 100,
+      pv: E.spreadAt(a.bac, a.blStart, a.blFinish + E.DAY, t), late: a.blFinish != null && fin > a.blFinish, crit: a.status !== "C" && s.TF[a.i] <= 0 };
+  });
+  S.insRows = { m, s, rows };
+  return rows;
+}
+function insFilter(except) {
+  const f = S.ins.f;
+  return insightRows().filter(r => (except === "wbs" || !f.wbs || r.wbs === f.wbs) && (except === "status" || !f.status || r.status === f.status)
+    && (except === "bucket" || !f.bucket || r.bucket === f.bucket) && (except === "month" || !f.month || r.month === f.month));
+}
+const sum = (rows, k) => rows.reduce((a, r) => a + (r[k] || 0), 0);
+function monthlyCost(rows) {
+  const m = S.m, s = S.s, dd = m.dataDate;
+  const end = Math.max(...m.acts.map(a => a.blFinish || 0), E.projectFinishDate(m, s));
+  const months = []; let d = new Date(m.start), t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  while (t <= end) { const n = new Date(t), nx = Date.UTC(n.getUTCFullYear(), n.getUTCMonth() + 1, 1); months.push({ k: monthKey(t), a: t, b: nx }); t = nx; }
+  return months.map(mo => {
+    let pv = 0, ev = 0, ac = 0, fc = 0;
+    rows.forEach(r => {
+      const a = r.a;
+      pv += E.spreadAt(a.bac, a.blStart, a.blFinish + E.DAY, mo.b) - E.spreadAt(a.bac, a.blStart, a.blFinish + E.DAY, mo.a);
+      if (a.actStart != null) {
+        const f = (a.status === "C" ? (a.actFinish || dd) : dd) + E.DAY;
+        const cap = x => Math.min(x, dd + E.DAY);
+        ev += E.spreadAt(r.ev, a.actStart, f, cap(mo.b)) - E.spreadAt(r.ev, a.actStart, f, cap(mo.a));
+        ac += E.spreadAt(a.ac, a.actStart, f, cap(mo.b)) - E.spreadAt(a.ac, a.actStart, f, cap(mo.a));
+      }
+      if (a.status !== "C" && a.etc) {
+        const fs = Math.max(r.start, dd + E.DAY), ff = r.fin + E.DAY;
+        fc += E.spreadAt(a.etc, fs, ff, mo.b) - E.spreadAt(a.etc, fs, ff, mo.a);
+      }
+    });
+    return { k: mo.k, pv, ev: mo.a <= dd ? ev : null, ac: mo.a <= dd ? ac : null, fc };
+  });
+}
+const tipAttr = html => `data-tip="${esc(html)}"`;
+function vizBarsH(id, title, items, opts) {
+  // items: [{key, label, value, value2?, note?, color}], selectable bars
+  const sel = opts.selected, max = Math.max(1, ...items.map(x => Math.max(x.value, x.value2 || 0)));
+  return `<section class="panel viz"><div class="viz-h"><h3>${title}</h3>${opts.legend || ""}</div>
+    <div class="hbars">${items.map(x => {
+      const dim = sel && sel !== x.key ? " dim" : "";
+      return `<button class="hbar${dim}${sel === x.key ? " on" : ""}" data-slice="${opts.dim}" data-val="${esc(x.key)}" ${tipAttr(x.tip || "")} aria-pressed="${sel === x.key}">
+        <span class="hb-l">${esc(x.label)}</span>
+        <span class="hb-t"><span class="hb-b" style="width:${100 * x.value / max}%;background:${x.color || "var(--s-pv)"};${x.value2 != null ? "opacity:.28" : ""}"></span>${x.value2 != null ? `<span class="hb-b hb-b2" style="width:${100 * x.value2 / max}%;background:${x.color2 || "var(--s-ev)"}"></span>` : ""}</span>
+        <span class="hb-v num">${x.note}</span></button>`; }).join("")}</div></section>`;
+}
+function vizCols(title, items, opts) {
+  const sel = opts.selected, max = Math.max(1, ...items.map(x => x.value)), W = 100 / Math.max(1, items.length);
+  return `<section class="panel viz"><div class="viz-h"><h3>${title}</h3>${opts.legend || ""}</div>
+    <div class="cols" style="--n:${items.length}">${items.map(x => {
+      const dim = sel && sel !== x.key ? " dim" : "";
+      return `<button class="col${dim}${sel === x.key ? " on" : ""}" ${opts.dim ? `data-slice="${opts.dim}" data-val="${esc(x.key)}"` : ""} ${tipAttr(x.tip || "")} aria-pressed="${sel === x.key}">
+        <span class="col-v num">${x.value || ""}</span><span class="col-t"><span class="col-b" style="height:${100 * x.value / max}%;background:${x.color || "var(--s-pv)"}"></span></span><span class="col-l">${esc(x.label)}</span></button>`; }).join("")}</div></section>`;
+}
+function vizCostMonths(rows) {
+  const data = monthlyCost(rows), W = Math.max(1040, data.length * 48), H = 250, P = { l: 56, r: 10, t: 12, b: 26 };
+  const max = Math.max(1, ...data.map(d => Math.max(d.pv, d.ev || 0, d.ac || 0, d.fc || 0))) * 1.08;
+  const bw = (W - P.l - P.r) / data.length, Y = v => H - P.b - v / max * (H - P.t - P.b);
+  const step = max > 1.6e7 ? 4e6 : max > 8e6 ? 2e6 : max > 4e6 ? 1e6 : max > 2e6 ? 5e5 : max > 8e5 ? 2e5 : 1e5;
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly planned value, earned value, actual cost and forecast cost">`;
+  for (let v = 0; v <= max; v += step) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${Y(v) + 4}" text-anchor="end">${money(v).replace(".00M", "M")}</text>`;
+  data.forEach((d, k) => {
+    const x0 = P.l + k * bw + 3, w = (bw - 6) / 3;
+    const bar = (v, j, c, label) => v ? `<rect x="${x0 + j * w}" y="${Y(v)}" width="${Math.max(1, w - 1.5)}" height="${H - P.b - Y(v)}" rx="1.5" fill="${c}"/>` : "";
+    const tip = `<b>${monthLabel(d.k)}</b><br>Planned ${money(d.pv)}` + (d.ev != null ? `<br>Earned ${money(d.ev)}<br>Actual ${money(d.ac)}` : "") + (d.fc ? `<br>Forecast ${money(d.fc)}` : "");
+    g += `<g ${tipAttr(tip)} class="cm">` + `<rect x="${P.l + k * bw}" y="${P.t}" width="${bw}" height="${H - P.t - P.b}" fill="transparent"/>` + bar(d.pv, 0, "var(--s-pv)") + (d.ev != null ? bar(d.ev, 1, "var(--s-ev)") + bar(d.ac, 2, "var(--s-ac)") : bar(d.fc, 1.5, "var(--s-fc)")) + `</g>`;
+    if (k % (bw < 30 ? 2 : 1) === 0) g += `<text x="${P.l + k * bw + bw / 2}" y="${H - 8}" text-anchor="middle">${monthLabel(d.k)}</text>`;
+  });
+  return `<section class="panel viz wide"><div class="viz-h"><h3>Cost by month</h3><div class="legend"><span><i style="background:var(--s-pv)"></i>Planned</span><span><i style="background:var(--s-ev)"></i>Earned</span><span><i style="background:var(--s-ac)"></i>Actual</span><span><i style="background:var(--s-fc)"></i>Forecast</span></div></div><div class="tbl-wrap">${g.replace("<svg ", `<svg class="cm-svg" width="${W}" height="${H}" `)}</svg></div></section>`;
+}
+function vInsights() {
+  const f = S.ins.f, view = S.ins.view, all = insFilter(null), m = S.m;
+  const chips = Object.entries(f).filter(([k, v]) => v).map(([k, v]) => {
+    const label = k === "wbs" ? (m.wbs[v] || {}).name : k === "status" ? STATUS_NAMES[v] : k === "bucket" ? "Float " + FLOAT_BUCKETS.find(b => b[0] === v)[1] : "Finishing " + monthLabel(v);
+    return `<button class="fchip" data-unslice="${k}">${esc(label)} ${ICON.x}</button>`; }).join("");
+  // KPIs
+  const bac = sum(all, "bac"), ev = sum(all, "ev"), ac = sum(all, "ac"), pv = sum(all, "pv");
+  const inc = all.filter(r => r.status !== "C"), neg = inc.filter(r => r.tf < 0).length, crit = inc.filter(r => r.crit).length;
+  const cpi = ac ? ev / ac : null, spi = pv ? ev / pv : null, lastFin = inc.length ? Math.max(...inc.map(r => r.fin)) : null;
+  const card = (l, v, d, tone) => `<div class="kpi"><span class="eyebrow">${l}</span><span class="v num ${tone || ""}">${v}</span><span class="d">${d}</span></div>`;
+  const toneIdx = v => v == null ? "" : v < 0.95 ? "tone-bad" : v < 1 ? "tone-warn" : "tone-good";
+  const kp = view === "sched" ? [card("Activities", all.length, `${inc.length} open`), card("Negative float", neg, "Open activities", neg ? "tone-bad" : ""), card("Critical", crit, "Float of zero or less", crit ? "tone-warn" : ""), card("Late vs baseline", inc.filter(r => r.late).length, "Open activities"), card("Last finish", lastFin ? E.fmt(lastFin, "short") : "None", "Of the filtered work")]
+    : view === "cost" ? [card("Budget", money(bac), all.length + " activities"), card("Planned value", money(pv), "At the data date"), card("Earned value", money(ev), bac ? pct1(100 * ev / bac) + " of budget" : ""), card("Actual cost", money(ac), "To date"), card("CPI", cpi ? cpi.toFixed(2) : "None", cpi ? "EAC " + money(bac / cpi) : "No actuals yet", toneIdx(cpi))]
+    : [card("Activities", all.length, `${all.filter(r => r.status === "C").length} complete`), card("Budget", money(bac), bac ? pct1(100 * ev / bac) + " earned" : ""), card("SPI", spi ? spi.toFixed(2) : "None", "Earned over planned", toneIdx(spi)), card("CPI", cpi ? cpi.toFixed(2) : "None", "Earned over actual", toneIdx(cpi)), card("Last finish", lastFin ? E.fmt(lastFin, "short") : "Done", neg ? `<span class="tone-bad">${neg} with negative float</span>` : "No negative float")];
+  // visuals
+  const wr = insFilter("wbs"), byW = {};
+  wr.forEach(r => { const w = byW[r.wbs] || (byW[r.wbs] = { key: r.wbs, label: r.wbsName, bac: 0, ev: 0, ac: 0, n: 0, neg: 0, seq: (m.wbs[r.wbs] || {}).seq || 99 }); w.bac += r.bac; w.ev += r.ev; w.ac += r.ac; w.n++; if (r.status !== "C" && r.tf < 0) w.neg++; });
+  const wItems = Object.values(byW).sort((a, b) => a.seq - b.seq);
+  const wbsViz = vizBarsH("wbs", "Budget and earned value by WBS", wItems.map(w => ({ key: w.key, label: w.label, value: w.bac, value2: w.ev, note: w.ac ? (w.ev / w.ac).toFixed(2) + " CPI" : money(w.bac),
+    tip: `<b>${esc(w.label)}</b><br>Budget ${money(w.bac)}<br>Earned ${money(w.ev)}<br>Actual ${money(w.ac)}<br>${w.n} activities, ${w.neg} with negative float` })),
+    { dim: "wbs", selected: f.wbs, legend: `<div class="legend"><span><i style="background:var(--s-pv);opacity:.35"></i>Budget</span><span><i style="background:var(--s-ev)"></i>Earned</span></div>` });
+  const sr = insFilter("status");
+  const stViz = vizBarsH("status", "Activities by status", ["C", "A", "N"].map(k => { const n = sr.filter(r => r.status === k).length; return { key: k, label: STATUS_NAMES[k], value: n, note: String(n), color: k === "C" ? "var(--ink-3)" : k === "A" ? "var(--s-ev)" : "var(--s-pv)", tip: `<b>${STATUS_NAMES[k]}</b><br>${n} activities` }; }), { dim: "status", selected: f.status });
+  const br = insFilter("bucket").filter(r => r.bucket);
+  const flViz = vizCols("Float distribution (working days)", FLOAT_BUCKETS.map(([k, l]) => { const n = br.filter(r => r.bucket === k).length; return { key: k, label: l, value: n, color: k === "neg" ? "var(--bad)" : k === "zero" ? "var(--warn)" : "var(--s-pv)", tip: `<b>Float ${l}</b><br>${n} open activities` }; }), { dim: "bucket", selected: f.bucket });
+  const mr = insFilter("month").filter(r => r.month), byM = {};
+  mr.forEach(r => { byM[r.month] = byM[r.month] || { n: 0, late: 0 }; byM[r.month].n++; if (r.late) byM[r.month].late++; });
+  const mKeys = Object.keys(byM).sort();
+  const moViz = vizCols("Forecast finishes by month", mKeys.map(k => ({ key: k, label: monthLabel(k), value: byM[k].n, color: byM[k].late / byM[k].n > 0.5 ? "var(--s-ac)" : "var(--s-pv)", tip: `<b>${monthLabel(k)}</b><br>${byM[k].n} activities finish<br>${byM[k].late} later than baseline` })), { dim: "month", selected: f.month, legend: `<div class="legend"><span><i style="background:var(--s-pv)"></i>Mostly on time</span><span><i style="background:var(--s-ac)"></i>Mostly late</span></div>` });
+  const costViz = S.ev.BAC ? vizCostMonths(all) : "";
+  const tRows = all.slice().sort((a, b) => view === "cost" ? b.bac - a.bac : ((a.status === "C") - (b.status === "C")) || ((a.tf ?? 1e9) - (b.tf ?? 1e9))).slice(0, 15);
+  const table = `<section class="panel viz wide"><div class="viz-h"><h3>${view === "cost" ? "Largest budgets" : "Activities with the least float"}</h3><span class="muted" style="font-size:.82rem">${all.length} activities match the filters</span></div><div class="tbl-wrap"><table><thead><tr><th>Activity</th><th>WBS</th>${view === "cost" ? `<th class="r">Budget</th><th class="r">Earned</th><th class="r">Actual</th><th class="r">CPI</th>` : `<th>Status</th><th class="r">Finish</th><th class="r">Float</th>`}</tr></thead><tbody>
+    ${tRows.map(r => `<tr class="click" data-act-open="${r.i}"><td><span class="mono">${esc(r.code)}</span> ${esc(r.name)}</td><td class="muted">${esc(r.wbsName)}</td>${view === "cost" ? `<td class="r">${money(r.bac)}</td><td class="r">${money(r.ev)}</td><td class="r">${money(r.ac)}</td><td class="r">${r.ac ? (r.ev / r.ac).toFixed(2) : ""}</td>` : `<td>${statusChip(r.a)}</td><td class="r">${E.fmt(r.fin, "short")}</td><td class="r ${r.tf < 0 ? "tone-bad" : ""}">${r.tf == null ? "" : r.tf + "d"}</td>`}</tr>`).join("") || `<tr><td colspan="6" class="muted">No activities match these filters.</td></tr>`}
+  </tbody></table></div></section>`;
+  const layout = view === "sched" ? [flViz, moViz, stViz, wbsViz, table] : view === "cost" ? [wbsViz, stViz, costViz, table] : [wbsViz, stViz, costViz, flViz, moViz];
+  return `<section class="ins-bar">
+      <div class="seg" role="group" aria-label="Saved views">${[["exec", "Executive"], ["sched", "Scheduler"], ["cost", "Cost"]].map(([k, l]) => `<button data-insview="${k}" aria-pressed="${view === k}">${l}</button>`).join("")}</div>
+      <div class="fchips">${chips ? chips + `<button class="btn sm ghost" data-unslice="all">Clear all</button>` : `<span class="muted" style="font-size:.85rem">Click any bar to filter every visual on the page</span>`}</div>
+      <button class="btn sm primary" data-act="pbi">${ICON.dl}Export for Power BI</button>
+    </section>
+    <section class="kpis">${kp.join("")}</section>
+    <div class="ins-grid">${layout.join("")}</div>`;
+}
+
+/* ---- Power BI export ---- */
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = () => res(window.JSZip); sc.onerror = rej; document.head.appendChild(sc); });
+}
+function pbiTables() {
+  const m = S.m, s = S.s, rows = insightRows(), iso = t => E.fmt(t, "iso");
+  const T = {};
+  T["Activities.csv"] = csv([["ActivityID", "ActivityName", "WBS", "Status", "PercentComplete", "OriginalDuration", "RemainingDuration", "Start", "Finish", "BaselineStart", "BaselineFinish", "FinishVarianceDays", "TotalFloat", "FloatBand", "Critical", "Driving", "CriticalityIndex", "Budget", "PlannedValue", "EarnedValue", "ActualCost", "RemainingCost"]]
+    .concat(rows.map(r => [r.code, r.name, r.wbsName, STATUS_NAMES[r.status], r.a.pct, r.a.origDur, r.a.remDur, iso(r.start), iso(r.fin), iso(r.a.blStart), iso(r.a.blFinish), r.a.blFinish ? E.idx(r.a.blFinish) - E.idx(r.fin) : "", r.tf ?? "", r.bucket ? FLOAT_BUCKETS.find(b => b[0] === r.bucket)[1] : "Complete", r.crit ? "Y" : "N", s.driving.has(r.i) ? "Y" : "N", (S.mc.crit[r.i] || 0).toFixed(3), r.bac, r.pv.toFixed(0), r.ev.toFixed(0), r.ac, r.etc])));
+  T["Relationships.csv"] = csv([["PredecessorID", "SuccessorID", "Type", "LagDays"]].concat(m.rels.map(r => [m.acts[r.p].code, m.acts[r.s].code, E.REL_LABEL[r.type] || r.type, r.lag])));
+  T["WBS.csv"] = csv([["WBS", "Budget", "PlannedValue", "EarnedValue", "ActualCost", "CPI", "SPI"]].concat(S.ev.byWbs.filter(w => w.BAC).map(w => [(m.wbs[w.id] || {}).name, w.BAC, w.PV.toFixed(0), w.EV.toFixed(0), w.AC, w.CPI ? w.CPI.toFixed(3) : "", w.SPI ? w.SPI.toFixed(3) : ""])));
+  let cp = 0, ce = 0, ca = 0, cf = 0;
+  T["CostByMonth.csv"] = csv([["Month", "MonthStart", "PlannedValue", "EarnedValue", "ActualCost", "ForecastCost", "CumPlanned", "CumEarned", "CumActual", "CumActualPlusForecast"]].concat(monthlyCost(rows).map(d => { cp += d.pv; ce += d.ev || 0; ca += d.ac || 0; cf += (d.ac || 0) + (d.fc || 0); return [monthLabel(d.k), d.k + "-01", d.pv.toFixed(0), d.ev == null ? "" : d.ev.toFixed(0), d.ac == null ? "" : d.ac.toFixed(0), d.fc.toFixed(0), cp.toFixed(0), d.ev == null ? "" : ce.toFixed(0), d.ac == null ? "" : ca.toFixed(0), cf.toFixed(0)]; })));
+  T["DCMA14.csv"] = exportDcma();
+  T["RiskSummary.csv"] = csv([["Measure", "Date"], ["Deterministic finish", iso(E.projectFinishDate(m, s))], ["P10", iso(E.dateOf(S.mc.P10 - 1))], ["P50", iso(E.dateOf(S.mc.P50 - 1))], ["P80", iso(E.dateOf(S.mc.P80 - 1))], ["P90", iso(E.dateOf(S.mc.P90 - 1))]]);
+  T["RecoveryOptions.csv"] = exportRecovery();
+  if (S.cmp) T["UpdateComparison.csv"] = exportCompare();
+  T["README_PowerBI.txt"] = [
+    `ControlPoint export for Power BI`, `Project: ${m.title}`, `Data date: ${E.fmt(m.dataDate)}`, ``,
+    `LOAD`, `1. In Power BI Desktop choose Get data, then Folder, and pick the folder where you unzipped these files.`, `   Or load each CSV with Get data, then Text/CSV.`, `2. In Model view, relate Activities[WBS] to WBS[WBS] (many to one).`, `3. Relate Relationships[PredecessorID] to Activities[ActivityID] if you want logic tables.`, `4. Mark CostByMonth[MonthStart] as a date column for time based visuals.`, ``,
+    `SUGGESTED DAX MEASURES`, `Budget = SUM(Activities[Budget])`, `Earned Value = SUM(Activities[EarnedValue])`, `Planned Value = SUM(Activities[PlannedValue])`, `Actual Cost = SUM(Activities[ActualCost])`, `CPI = DIVIDE([Earned Value], [Actual Cost])`, `SPI = DIVIDE([Earned Value], [Planned Value])`, `EAC = DIVIDE([Budget], [CPI])`, `Negative Float Count = CALCULATE(COUNTROWS(Activities), Activities[TotalFloat] < 0)`, `Percent Earned = DIVIDE([Earned Value], [Budget])`, ``,
+    `SUGGESTED VISUALS`, `Line chart of CostByMonth[CumPlanned], [CumEarned], [CumActual] by MonthStart (S curve).`, `Clustered bar of WBS by Budget and Earned Value.`, `Column chart of Activities by FloatBand, with Status as a slicer.`, `Table of Activities sorted by TotalFloat.`, ``, `Prepared with Echolink ControlPoint. info@echolinksolutions.com`].join("\r\n");
+  return T;
+}
+async function exportPowerBI() {
+  const T = pbiTables(), name = S.m.name + "_PowerBI_" + E.fmt(S.m.dataDate, "iso");
+  try {
+    const JSZip = await loadJSZip(), zip = new JSZip(), dir = zip.folder(name);
+    Object.entries(T).forEach(([f, d]) => dir.file(f, d));
+    await save(name + ".zip", await zip.generateAsync({ type: "blob", compression: "DEFLATE" }));
+  } catch (e) { toast("The Power BI package could not be built. Check your connection and try again."); }
+}
+
+/* ---- playback ---- */
+function buildFrames() {
+  if (S.pb && S.pb.m === S.m) return S.pb;
+  const m = S.m, s = S.s, frames = [], WEEK = 7 * E.DAY;
+  const pack = (t, mm, ss, phase) => {
+    const st = [], sd = [], fd = [], tf = [];
+    mm.acts.forEach((a, i) => { st.push(a.status); sd.push(E.startDate(mm, ss, i)); fd.push(E.finishDate(mm, ss, i)); tf.push(ss.TF[i]); });
+    const fin = E.projectFinishDate(mm, ss);
+    return { t, phase, st, sd, fd, tf, fin, neg: mm.acts.filter((a, i) => a.status !== "C" && ss.TF[i] < 0).length, done: st.filter(x => x === "C").length, active: st.filter(x => x === "A").length };
+  };
+  for (let t = m.start; t < m.dataDate; t += WEEK) { const sn = E.snapshotAt(m, t); frames.push(pack(t, sn, E.schedule(sn), "history")); }
+  frames.push(pack(m.dataDate, m, s, "now"));
+  const cur = frames[frames.length - 1], end = cur.fin;
+  for (let t = m.dataDate + WEEK; t <= end + WEEK; t += WEEK) {
+    const st = cur.st.map((x, i) => x === "C" ? "C" : cur.fd[i] < t ? "C" : cur.sd[i] < t ? "A" : "N");
+    frames.push(Object.assign({}, cur, { t, phase: "forecast", st, done: st.filter(x => x === "C").length, active: st.filter(x => x === "A").length, neg: cur.neg }));
+  }
+  const evPts = S.ev.series.points;
+  frames.forEach(fr => { const p = evPts.filter(q => q.t <= fr.t).pop(); fr.pv = p ? p.pv : 0; fr.ev = p && p.ev != null ? p.ev : null; });
+  S.pb = { m, frames, k: frames.findIndex(f => f.phase === "now"), playing: false, timer: null };
+  return S.pb;
+}
+function pbChart(pb) {
+  const fr = pb.frames.filter(f => f.phase !== "forecast"), W = 560, H = 190, P = { l: 66, r: 16, t: 14, b: 26 }, m = S.m;
+  const bl = S.ev.blFinish, f = facts(), tgt = f.fm && f.fm.cstrDate ? f.fm.cstrDate : null;
+  const ys = fr.map(x => x.fin).concat(bl), lo = Math.min(...ys) - 5 * E.DAY, hi = Math.max(...ys) + 5 * E.DAY;
+  const x0 = fr[0].t, x1 = fr[fr.length - 1].t;
+  const X = t => P.l + (t - x0) / Math.max(1, x1 - x0) * (W - P.l - P.r), Y = v => P.t + (hi - v) / (hi - lo) * (H - P.t - P.b);
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast finish date at each weekly snapshot">`;
+  const ticks = 4; for (let k = 0; k <= ticks; k++) { const v = lo + (hi - lo) * k / ticks; g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${Y(v) + 4}" text-anchor="end">${E.fmt(v, "short")}</text>`; }
+  g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(bl)}" y2="${Y(bl)}" stroke="var(--ink-3)" stroke-dasharray="4 4"/><text x="${W - P.r}" y="${Y(bl) - 5}" text-anchor="end">Baseline finish</text>`;
+  const kk = Math.min(pb.k, fr.length - 1), cur = fr.slice(0, kk + 1);
+  g += `<path d="${fr.map((q, i) => (i ? "L" : "M") + X(q.t).toFixed(1) + " " + Y(q.fin).toFixed(1)).join("")}" fill="none" stroke="var(--line-2)" stroke-width="2"/>`;
+  g += `<path d="${cur.map((q, i) => (i ? "L" : "M") + X(q.t).toFixed(1) + " " + Y(q.fin).toFixed(1)).join("")}" fill="none" stroke="var(--s-ac)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const last = cur[cur.length - 1];
+  g += `<circle cx="${X(last.t)}" cy="${Y(last.fin)}" r="5" fill="var(--s-ac)" stroke="var(--surface)" stroke-width="2"/>`;
+  [[x0, "start"], [x1, "end"]].forEach(([t, a]) => g += `<text x="${X(t)}" y="${H - 8}" text-anchor="${a}">${E.fmt(t, "short")}</text>`);
+  return g + `</svg>`;
+}
+function pbGantt(pb) {
+  const m = S.m, fr = pb.frames[pb.k], LW = 250, RH = 15, HH = 24;
+  const t0 = m.start - 7 * E.DAY, t1 = Math.max(...pb.frames.map(f => f.fin), S.ev.blFinish) + 14 * E.DAY;
+  const pxd = 1.9, W = LW + (t1 - t0) / E.DAY * pxd, H = HH + m.acts.length * RH + 4, X = t => LW + (t - t0) / E.DAY * pxd;
+  let g = `<svg width="${Math.ceil(W)}" height="${H}" role="img" aria-label="Schedule as of ${E.fmt(fr.t)}">`;
+  let mt = Date.UTC(new Date(t0).getUTCFullYear(), new Date(t0).getUTCMonth() + 1, 1);
+  while (mt < t1) { const d = new Date(mt); g += `<line x1="${X(mt)}" x2="${X(mt)}" y1="${HH - 8}" y2="${H}" stroke="var(--line)"/><text x="${X(mt) + 4}" y="${HH - 10}" font-size="10" style="fill:var(--ink-3)">${MONS[d.getUTCMonth()]}</text>`; mt = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1); }
+  m.acts.forEach((a, i) => {
+    const y = HH + i * RH, cy = y + RH / 2, st = fr.st[i], neg = st !== "C" && fr.tf[i] != null && fr.tf[i] < 0;
+    g += `<text x="10" y="${cy + 3.5}" font-size="10.5" style="fill:${neg ? "var(--bad)" : st === "C" ? "var(--ink-3)" : "var(--ink)"}"><tspan font-family="IBM Plex Mono, monospace" font-size="9.5" style="fill:var(--ink-3)">${esc(a.code)}</tspan><tspan dx="6">${esc(a.name.length > 30 ? a.name.slice(0, 29) + "…" : a.name)}</tspan></text>`;
+    if (a.blStart != null && !a.mile) g += `<rect x="${X(a.blStart)}" y="${cy + 3}" width="${Math.max(1, X(a.blFinish + E.DAY) - X(a.blStart))}" height="2" fill="var(--bl)"/>`;
+    const x1 = X(fr.sd[i]), x2 = X(fr.fd[i] + E.DAY), col = st === "C" ? "var(--ink-3)" : neg ? "var(--crit)" : st === "A" ? "var(--s-ev)" : "var(--bar)";
+    if (a.mile) { const x = X(a.finMile ? fr.fd[i] + E.DAY : fr.sd[i]); g += `<path d="M${x} ${cy - 5} l5 5 l-5 5 l-5 -5z" fill="${col}"/>`; }
+    else g += `<rect class="pbbar" x="${x1}" y="${cy - 4.5}" width="${Math.max(2, x2 - x1)}" height="8" rx="2" fill="${col}" opacity="${st === "C" ? 0.55 : 1}"/>`;
+  });
+  const xd = X(fr.t);
+  g += `<rect x="0" y="0" width="${LW}" height="${H}" fill="var(--surface)" opacity=".001"/><line x1="${xd}" x2="${xd}" y1="${HH - 14}" y2="${H}" stroke="var(--accent)" stroke-width="2"/>`;
+  return g + `</svg>`;
+}
+function pbPhase(fr) {
+  return fr.phase === "history" ? `<span class="chip neutral">As known on this date</span>` : fr.phase === "now" ? `<span class="chip warn">Data date</span>` : `<span class="chip neutral" style="border:1px dashed var(--line-2);background:transparent">Forecast</span>`;
+}
+function pbDyn(pb) {
+  const fr = pb.frames[pb.k], m = S.m, bl = S.ev.blFinish, slip = E.idx(fr.fin) - E.idx(bl);
+  return `<section class="kpis">
+      <div class="kpi"><span class="eyebrow">Forecast finish that week</span><span class="v num ${slip > 0 ? "tone-bad" : ""}">${E.fmt(fr.fin, "short")}</span><span class="d">${slip > 0 ? slip + " working days behind baseline" : "On baseline"}</span></div>
+      <div class="kpi"><span class="eyebrow">Activities complete</span><span class="v num">${fr.done} / ${m.acts.length}</span><span class="d">${fr.active} in progress</span></div>
+      <div class="kpi"><span class="eyebrow">Negative float</span><span class="v num ${fr.neg ? "tone-bad" : ""}">${fr.neg}</span><span class="d">Open activities that week</span></div>
+      ${S.ev.BAC ? `<div class="kpi"><span class="eyebrow">Earned</span><span class="v num">${fr.ev != null ? pct1(100 * fr.ev / S.ev.BAC) : "Forecast"}</span><span class="d">Planned ${pct1(100 * fr.pv / S.ev.BAC)} by then</span></div>` : ""}
+    </section>
+    <div class="grid g-main">
+      <section class="panel"><div class="panel-h"><h2>How the finish date slid</h2><span class="muted" style="font-size:.85rem">Forecast finish at each weekly snapshot</span></div><div class="chart">${pbChart(pb)}</div></section>
+      <section class="panel"><h2 style="margin-bottom:8px">What to watch</h2><div class="legend" style="flex-direction:column;align-items:flex-start;gap:8px"><span><i style="background:var(--s-ev)"></i>In progress</span><span><i style="background:var(--crit)"></i>Negative float, now late</span><span><i style="background:var(--bar)"></i>Not started</span><span><i style="background:var(--ink-3);opacity:.55"></i>Complete</span><span><i style="background:var(--bl);height:3px"></i>Baseline</span></div>
+        <p class="muted" style="font-size:.85rem;margin:12px 0 0">Press Play and watch the red spread as early delays on permits, excavation and steel push into the driving path.</p></section>
+    </div>
+    <div class="gantt" id="pb-gantt">${pbGantt(pb)}</div>`;
+}
+function vPlayback() {
+  const pb = buildFrames(), fr = pb.frames[pb.k], m = S.m, n = pb.frames.length;
+  return `<section class="panel pb-ctrl">
+      <div class="pb-top"><div style="min-width:0"><div class="eyebrow">Week by week playback</div><h2 class="num" id="pb-date">${E.fmt(fr.t)} ${pbPhase(fr)}</h2></div>
+      <div class="actions"><button class="btn primary" data-act="pb-play" id="pb-play">${pb.playing ? "Pause" : "Play"}</button><button class="btn sm" data-act="pb-start">From the start</button><button class="btn sm" data-act="pb-now">Jump to data date</button></div></div>
+      <input type="range" id="pb-slider" min="0" max="${n - 1}" value="${pb.k}" aria-label="Week">
+      <div class="pb-axis"><span>${E.fmt(pb.frames[0].t, "short")}</span><span>Data date ${E.fmt(m.dataDate, "short")}</span><span>${E.fmt(pb.frames[n - 1].t, "short")}</span></div>
+      <p class="muted" style="font-size:.8rem;margin:6px 0 0">Up to the data date, each week rebuilds the schedule from the actual dates known at that time and recalculates the critical path. After the data date, work follows the current forecast.</p>
+    </section>
+    <div id="pb-dyn">${pbDyn(pb)}</div>`;
+}
+function pbShow(k) {
+  const pb = S.pb; pb.k = Math.max(0, Math.min(pb.frames.length - 1, k));
+  const dyn = $("#pb-dyn"); if (!dyn) return;
+  const gx = $("#pb-gantt") ? $("#pb-gantt").scrollLeft : 0, gy = $("#pb-gantt") ? $("#pb-gantt").scrollTop : 0;
+  dyn.innerHTML = pbDyn(pb);
+  const g = $("#pb-gantt"); if (g) { g.scrollLeft = gx; g.scrollTop = gy; }
+  const fr = pb.frames[pb.k];
+  $("#pb-date").innerHTML = `${E.fmt(fr.t)} ${pbPhase(fr)}`;
+  const sl = $("#pb-slider"); if (sl && +sl.value !== pb.k) sl.value = pb.k;
+  const pl = $("#pb-play"); if (pl) pl.textContent = pb.playing ? "Pause" : "Play";
+}
+function pbToggle() {
+  const pb = buildFrames();
+  if (pb.playing) { clearInterval(pb.timer); pb.playing = false; pbShow(pb.k); return; }
+  if (pb.k >= pb.frames.length - 1) pb.k = 0;
+  pb.playing = true;
+  pb.timer = setInterval(() => {
+    if (S.view !== "playback") { clearInterval(pb.timer); pb.playing = false; return; }
+    if (pb.k >= pb.frames.length - 1) { clearInterval(pb.timer); pb.playing = false; pbShow(pb.k); return; }
+    pbShow(pb.k + 1);
+  }, 450);
+  pbShow(pb.k);
 }
 
 /* ---- update comparison ---- */
@@ -1019,7 +1337,7 @@ function vData() {
     </section>
     <section class="panel"><h2 style="margin-bottom:10px">Exports</h2>
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${[["report", "Owner report (.html)", "Branded monthly report. Open it and choose Print or save as PDF"], ["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-prev", "Sample previous update (.xer)", "The 7 Sep 2026 update, for trying the comparison"], ["dl-cmp", "Update comparison (.csv)", "Every change between the two loaded updates"], ["dl-rec", "Recovery plan (.csv)", "Recovery options and the selected plan"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}">${ICON.dl}Save</button></div>`).join("")}
+        ${[["report", "Owner report (.html)", "Branded monthly report. Open it and choose Print or save as PDF"], ["pbi", "Power BI package (.zip)", "Related tables, setup steps and DAX measures for Power BI Desktop"], ["dl-xer", "Sample schedule (.xer)", "Northgate Distribution Center, ready to import into P6 or reload here"], ["dl-prev", "Sample previous update (.xer)", "The 7 Sep 2026 update, for trying the comparison"], ["dl-cmp", "Update comparison (.csv)", "Every change between the two loaded updates"], ["dl-rec", "Recovery plan (.csv)", "Recovery options and the selected plan"], ["dl-acts", "Activity register (.csv)", "Every activity with forecast dates, float and variance"], ["dl-dcma", "DCMA 14 point report (.csv)", "Each check, its result and the activities it flags"], ["dl-evm", "Earned value report (.csv)", "Indices, EAC methods and WBS breakdown"], ["dl-narr", "Status narrative (.md)", "Generates one first if needed"]].map(([a, l, d]) => `<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:10px"><div><b style="font-weight:600">${l}</b><div class="muted" style="font-size:.84rem">${d}</div></div><button class="btn sm" data-act="${a}">${ICON.dl}Save</button></div>`).join("")}
       </div>
       ${m.loops ? `<p class="tone-bad">Circular logic found: ${esc(m.loops.join(", "))}. Results for these activities are unreliable.</p>` : ""}
     </section></div>`;
@@ -1263,6 +1581,7 @@ function afterRender() {
     const r = S.risks[+el.dataset.risk], f = el.dataset.f;
     r[f] = f === "on" ? el.checked : f === "prob" ? Math.max(0, Math.min(100, +el.value)) / 100 : f === "days" || f === "act" ? +el.value : el.value;
   }));
+  const sl = $("#pb-slider"); if (sl) sl.addEventListener("input", () => { const pb = S.pb; if (pb.playing) { clearInterval(pb.timer); pb.playing = false; } pbShow(+sl.value); });
   document.querySelectorAll("[data-rec]").forEach(el => el.addEventListener("change", () => { if (el.checked) S.recSel.add(el.dataset.rec); else S.recSel.delete(el.dataset.rec); render(); }));
   const dm = $("#demo-form"); if (dm) dm.addEventListener("submit", e => { e.preventDefault(); submitDemo(dm); });
   const sw = $("#skip-welcome"); if (sw) sw.addEventListener("change", () => { try { localStorage.setItem("cp.skipWelcome", sw.checked ? "1" : "0"); } catch (e) {} });
@@ -1286,12 +1605,15 @@ $("#file-prev").addEventListener("change", e => {
   r.readAsText(f);
 });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-view],[data-go],[data-act],[data-act-open],[data-filter-set],[data-ask],[data-ai-check],[data-ai-act],[data-whatif],[data-del-risk]");
+  const t = e.target.closest("[data-view],[data-go],[data-act],[data-act-open],[data-filter-set],[data-ask],[data-ai-check],[data-ai-act],[data-whatif],[data-del-risk],[data-slice],[data-unslice],[data-insview]");
   if (!t) { if (e.target.closest(".drawer") == null && $("#drawer-host").innerHTML && !e.target.closest("[data-act-open]")) $("#drawer-host").innerHTML = ""; return; }
   const ds = t.dataset;
   if (ds.view) { S.view = ds.view; $("#drawer-host").innerHTML = ""; render(); window.scrollTo(0, 0); return; }
   if (ds.go) { S.view = ds.go; if (ds.filter) S.filter = ds.filter; render(); window.scrollTo(0, 0); return; }
   if (ds.filterSet) { S.filter = ds.filterSet; render(); return; }
+  if (ds.slice) { S.ins.f[ds.slice] = S.ins.f[ds.slice] === ds.val ? null : ds.val; $("#itip").hidden = true; keepScroll(render); return; }
+  if (ds.unslice) { if (ds.unslice === "all") Object.keys(S.ins.f).forEach(k => S.ins.f[k] = null); else S.ins.f[ds.unslice] = null; keepScroll(render); return; }
+  if (ds.insview) { S.ins.view = ds.insview; keepScroll(render); return; }
   if (ds.actOpen != null) { openActivity(+ds.actOpen); return; }
   if (ds.ask) { ask(ds.ask); return; }
   if (ds.whatif) { S.whatIf.act = +ds.whatif; S.view = "risk"; $("#drawer-host").innerHTML = ""; render(); setTimeout(() => $("#wi-out")?.scrollIntoView({ block: "center" }), 50); return; }
@@ -1318,6 +1640,10 @@ document.addEventListener("click", e => {
   else if (act === "dl-rec") save(S.m.name + "_recovery_plan.csv", exportRecovery());
   else if (act === "rec-best") { S.recSel = new Set(S.rec.plan.map(o => o.id)); render(); }
   else if (act === "rec-clear") { S.recSel = new Set(); render(); }
+  else if (act === "pbi") exportPowerBI();
+  else if (act === "pb-play") pbToggle();
+  else if (act === "pb-start") { const pb = buildFrames(); if (pb.playing) { clearInterval(pb.timer); pb.playing = false; } pbShow(0); }
+  else if (act === "pb-now") { const pb = buildFrames(); if (pb.playing) { clearInterval(pb.timer); pb.playing = false; } pbShow(pb.frames.findIndex(f => f.phase === "now")); }
   else if (act === "report") save(S.m.name + "_Owner_Report_" + E.fmt(S.m.dataDate, "iso") + ".html", ownerReport());
   else if (act === "demo") { S.view = "welcome"; $("#drawer-host").innerHTML = ""; render(); setTimeout(() => { const d = $("#demo"); if (d) { d.scrollIntoView({ block: "start" }); $("#dm-name")?.focus({ preventScroll: true }); } }, 30); }
   else if (act === "dl-acts") save(S.m.name + "_activities.csv", exportActs());
@@ -1325,6 +1651,20 @@ document.addEventListener("click", e => {
   else if (act === "dl-evm") save(S.m.name + "_EVM.csv", exportEvm());
   else if (act === "dl-narr") { if (!S.narrative) S.narrative = ruleNarrative(), S.narrativeSource = "Rules engine"; save(S.m.name + "_status_narrative.md", "# " + S.m.title + " status narrative\n\nData date " + E.fmt(S.m.dataDate) + "\n\n" + S.narrative); }
   else if (act === "copy-narr") { const txt = S.narrative; navigator.clipboard.writeText(txt).then(() => toast("Copied"), () => { const r = document.createRange(); r.selectNodeContents($("#narr-doc")); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Press Ctrl+C to copy"); }); }
+});
+function keepScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y); }
+document.addEventListener("pointerover", e => {
+  const el = e.target.closest("[data-tip]"), tip = $("#itip");
+  if (!el || !el.dataset.tip) { tip.hidden = true; return; }
+  tip.innerHTML = el.dataset.tip; tip.hidden = false;
+});
+document.addEventListener("pointermove", e => {
+  const tip = $("#itip"); if (tip.hidden) return;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + 14, y = e.clientY - h - 12;
+  if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+  if (y < 8) y = e.clientY + 18;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#drawer-host").innerHTML = ""; });
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { drawSCurve(); drawHist(); }, 150); });

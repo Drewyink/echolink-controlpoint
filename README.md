@@ -4,6 +4,8 @@ Project controls intelligence for Primavera P6 schedules.
 
 ## Features
 - Live critical path (CPM) recalculated from P6 logic
+- Power BI style Insights dashboard with cross filtering, saved views and a Power BI export package
+- Week by week playback that rebuilds the schedule from actual dates and shows how the finish date slid
 - DCMA 14 point schedule health check with fixes
 - Earned value: SPI, CPI, TCPI, earned schedule, three EAC methods
 - Monte Carlo risk with a risk register and what if analysis
@@ -35,4 +37,5 @@ Project controls intelligence for Primavera P6 schedules.
   When it is set, the chat analyst, "Explain with AI" and AI drafted narratives appear.
 - Demo requests: by default the form opens the visitor's email app addressed to info@echolinksolutions.com.
   To collect requests directly, add `demoEndpoint` (for example a Formspree URL) to CONTROLPOINT_CONFIG.
+- The Power BI export uses JSZip, loaded from cdnjs when the button is clicked.
 - Dates use a five day working calendar. Planned dates in the XER serve as the baseline.

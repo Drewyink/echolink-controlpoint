@@ -634,6 +634,24 @@
     return sch;
   }
 
+  /* ---------- Historical snapshot (for playback) ---------- */
+  // Rebuilds the schedule as it would have stood on date t, using only actual dates known by then
+  // and original durations for work not yet finished.
+  function snapshotAt(m, t) {
+    const D = idx(t);
+    const acts = m.acts.map(a => {
+      const b = Object.assign({}, a);
+      if (a.actFinish != null && a.actFinish < t) { b.status = "C"; b.remDur = 0; b.pct = 100; }
+      else if (a.actStart != null && a.actStart < t && !a.mile) {
+        const el = D - idx(a.actStart);
+        b.status = "A"; b.actFinish = null; b.remDur = Math.max(1, a.origDur - el); b.pct = Math.min(99, Math.round(100 * el / Math.max(1, a.origDur)));
+      } else { b.status = "N"; b.actStart = null; b.actFinish = null; b.remDur = a.mile ? 0 : a.origDur; b.pct = 0; }
+      return b;
+    });
+    return Object.assign({}, m, { acts, D, dataDate: t });
+  }
+  function spreadAt(total, s, f, t) { return spread(total, s, f, t); }
+
   /* ---------- XER writer (for the built-in sample and exports) ---------- */
   function writeXER(tables, order) {
     const out = ["ERMHDR\t20.12\t" + new Date().toISOString().slice(0, 10) + "\tProject\tadmin\tControlPoint\tdbxDatabaseNoName\tProject Management\tUSD"];
@@ -647,6 +665,6 @@
     return out.join("\r\n");
   }
 
-  const api = { parseDate, idx, dateOf, fmt, parseXER, buildModel, schedule, forward, durations, drivingPath, startDate, finishDate, projectFinishDate, dcma, evm, monteCarlo, writeXER, topWbs, compare, recovery, evalPlan, applyPlan, CSTR_LABEL, REL_LABEL, HARD, DAY };
+  const api = { parseDate, idx, dateOf, fmt, parseXER, buildModel, schedule, forward, durations, drivingPath, startDate, finishDate, projectFinishDate, dcma, evm, monteCarlo, writeXER, topWbs, compare, recovery, evalPlan, applyPlan, snapshotAt, spreadAt, CSTR_LABEL, REL_LABEL, HARD, DAY };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.PCEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);
